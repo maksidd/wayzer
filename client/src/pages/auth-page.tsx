@@ -235,64 +235,7 @@ export default function AuthPage() {
                         />
                       </div>
 
-                      <FormField
-                        control={registerForm.control}
-                        name="fullName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t("auth.full_name")}</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder={t("auth.full_name_placeholder")}
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                          control={registerForm.control}
-                          name="age"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>{t("auth.age")}</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  placeholder="25"
-                                  {...field}
-                                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-
-                      </div>
-
-
-
-                      <FormField
-                        control={registerForm.control}
-                        name="bio"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t("auth.bio")}</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder={t("auth.bio_placeholder")}
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      {/* Убраны поля "Полное имя", "Возраст" и "О себе", которые перенесены на страницу профиля */}
 
                       <Button
                         type="submit"
@@ -308,19 +251,24 @@ export default function AuthPage() {
                 </TabsContent>
               </Tabs>
             </CardContent>
-            <CardFooter className="flex justify-center text-sm text-gray-500">
-              {activeTab === "login"
-                ? t("auth.no_account")
-                : t("auth.have_account")}
-              <Button
-                variant="link"
-                className="px-2"
-                onClick={() =>
-                  setActiveTab(activeTab === "login" ? "register" : "login")
-                }
-              >
-                {activeTab === "login" ? t("auth.register") : t("auth.login")}
-              </Button>
+            <CardFooter className="flex flex-wrap justify-center text-sm text-gray-500">
+              <div className="flex items-center">
+                <span>
+                  {activeTab === "login"
+                    ? t("auth.no_account")
+                    : t("auth.have_account")}
+                </span>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="px-2 h-auto"
+                  onClick={() =>
+                    setActiveTab(activeTab === "login" ? "register" : "login")
+                  }
+                >
+                  {activeTab === "login" ? t("auth.register") : t("auth.login")}
+                </Button>
+              </div>
             </CardFooter>
           </Card>
         </div>
