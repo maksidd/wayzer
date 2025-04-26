@@ -6,12 +6,13 @@ import Header from '@/components/layout/header';
 import MobileTabs from '@/components/layout/mobile-tabs';
 import RouteCard from '@/components/routes/route-card';
 import RouteFilters from '@/components/routes/route-filters';
-import RouteMap from '@/components/map/route-map'; // Восстанавливаем импорт карты
+// Временно отключаем карту
+// import RouteMap from '@/components/map/route-map';
 import CreateRouteModal from '@/components/routes/create-route-modal';
 import MobileFilterMenu from '@/components/routes/mobile-filter-menu';
 import ChatDialog from '@/components/chat/chat-dialog';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Map, Route as RouteIcon } from 'lucide-react';
 import { Route } from '@shared/schema';
 
 export default function HomePage() {
@@ -87,13 +88,25 @@ export default function HomePage() {
         </div>
         
         <div className="md:flex md:flex-row-reverse gap-6">
-          {/* Карта (справа на десктопе, сверху на мобильных) */}
+          {/* Заглушка карты (справа на десктопе, сверху на мобильных) */}
           <div className="md:w-1/2 lg:w-3/5 mb-6 md:mb-0">
-            <RouteMap 
-              routes={routes || []} 
-              selectedRouteId={selectedRouteId}
-              onRouteSelect={handleRouteSelect}
-            />
+            <div className="h-[350px] md:h-[450px] bg-gray-100 rounded-lg flex flex-col items-center justify-center p-6 shadow-sm">
+              <Map className="h-16 w-16 text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-600 mb-2">{t('home.map_placeholder')}</h3>
+              <p className="text-gray-500 text-center mb-4 max-w-md">
+                Интерактивная карта маршрутов временно недоступна. Вы можете просмотреть маршруты в списке слева.
+              </p>
+              {selectedRoute && (
+                <div className="mt-2 text-center">
+                  <p className="text-primary">
+                    Выбран маршрут: <span className="font-semibold">{selectedRoute.title}</span>
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {selectedRoute.startPoint} → {selectedRoute.endPoint}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
           
           {/* Левая колонка с маршрутами */}
@@ -121,7 +134,15 @@ export default function HomePage() {
                 routes.map((route: Route) => (
                   <div key={route.id} id={`route-${route.id}`}>
                     <RouteCard 
-                      route={route} 
+                      route={{
+                        ...route,
+                        participantCount: 0, // Заглушка, в реальности нужно получать из API
+                        creator: {
+                          id: route.userId,
+                          username: 'user', // Заглушка, в реальности нужно получать из API
+                          rating: 0 // Заглушка, в реальности нужно получать из API
+                        }
+                      }}
                       onRouteSelect={handleRouteSelect} 
                     />
                   </div>
