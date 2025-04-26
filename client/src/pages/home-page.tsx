@@ -6,13 +6,13 @@ import Header from '@/components/layout/header';
 import MobileTabs from '@/components/layout/mobile-tabs';
 import RouteCard from '@/components/routes/route-card';
 import RouteFilters from '@/components/routes/route-filters';
-// Временно отключаем карту
-// import RouteMap from '@/components/map/route-map';
+import RouteMap from '@/components/map/route-map'; // Восстанавливаем импорт карты
 import CreateRouteModal from '@/components/routes/create-route-modal';
 import MobileFilterMenu from '@/components/routes/mobile-filter-menu';
 import ChatDialog from '@/components/chat/chat-dialog';
 import { Button } from '@/components/ui/button';
-import { Loader2, Map } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { Route } from '@shared/schema';
 
 export default function HomePage() {
   const { t } = useTranslation();
@@ -54,7 +54,7 @@ export default function HomePage() {
   };
 
   // Получаем выбранный маршрут
-  const selectedRoute = routes?.find(route => route.id === selectedRouteId);
+  const selectedRoute = routes?.find((route: Route) => route.id === selectedRouteId);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -86,57 +86,61 @@ export default function HomePage() {
           <h1 className="text-xl font-bold text-gray-800">{t('home.popular_routes')}</h1>
         </div>
         
-        {/* Заголовок показывающий информацию о выбранном маршруте */}
-        {selectedRoute && (
-          <div className="mb-6 p-4 bg-white rounded-lg shadow-sm">
-            <h2 className="text-lg font-semibold">{selectedRoute.title}</h2>
-            <div className="flex text-sm text-gray-500 mt-1">
-              <span>{selectedRoute.startPoint} → {selectedRoute.endPoint}</span>
-              <span className="mx-2">•</span>
-              <span>{new Date(selectedRoute.date).toLocaleDateString()}</span>
-            </div>
-            <p className="mt-2 text-gray-700">{selectedRoute.description}</p>
+        <div className="md:flex md:flex-row-reverse gap-6">
+          {/* Карта (справа на десктопе, сверху на мобильных) */}
+          <div className="md:w-1/2 lg:w-3/5 mb-6 md:mb-0">
+            <RouteMap 
+              routes={routes || []} 
+              selectedRouteId={selectedRouteId}
+              onRouteSelect={handleRouteSelect}
+            />
           </div>
-        )}
-
-        {/* Содержимое */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {isLoading ? (
-            <div className="col-span-full flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : routes && routes.length > 0 ? (
-            routes.map((route) => (
-              <div key={route.id} id={`route-${route.id}`}>
-                <RouteCard 
-                  route={route} 
-                  onRouteSelect={handleRouteSelect} 
-                />
+          
+          {/* Левая колонка с маршрутами */}
+          <div className="md:w-1/2 lg:w-2/5">
+            {/* Заголовок показывающий информацию о выбранном маршруте */}
+            {selectedRoute && (
+              <div className="mb-6 p-4 bg-white rounded-lg shadow-sm">
+                <h2 className="text-lg font-semibold">{selectedRoute.title}</h2>
+                <div className="flex flex-wrap text-sm text-gray-500 mt-1">
+                  <span>{selectedRoute.startPoint} → {selectedRoute.endPoint}</span>
+                  <span className="mx-2">•</span>
+                  <span>{new Date(selectedRoute.date).toLocaleDateString()}</span>
+                </div>
+                <p className="mt-2 text-gray-700">{selectedRoute.description}</p>
               </div>
-            ))
-          ) : (
-            <div className="col-span-full text-center py-12">
-              <i className="fas fa-route text-4xl text-gray-300 mb-3"></i>
-              <p className="text-gray-500">{t('home.no_routes_found')}</p>
-              {routeTypeFilter && (
-                <Button 
-                  variant="link" 
-                  onClick={() => setRouteTypeFilter(null)}
-                >
-                  {t('home.clear_filters')}
-                </Button>
+            )}
+
+            {/* Список маршрутов */}
+            <div className="space-y-4 md:max-h-[600px] md:overflow-y-auto pr-1">
+              {isLoading ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : routes && routes.length > 0 ? (
+                routes.map((route: Route) => (
+                  <div key={route.id} id={`route-${route.id}`}>
+                    <RouteCard 
+                      route={route} 
+                      onRouteSelect={handleRouteSelect} 
+                    />
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-500">{t('home.no_routes_found')}</p>
+                  {routeTypeFilter && (
+                    <Button 
+                      variant="link" 
+                      onClick={() => setRouteTypeFilter(null)}
+                    >
+                      {t('home.clear_filters')}
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
-          )}
-        </div>
-
-        {/* Заглушка вместо карты */}
-        <div className="mt-8 p-6 bg-gray-100 border border-gray-200 rounded-lg text-center">
-          <Map className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-          <p className="text-gray-500">{t('home.map_placeholder')}</p>
-          <Button variant="outline" className="mt-2" onClick={() => alert('Карта временно недоступна')}>
-            {t('home.view_on_map')}
-          </Button>
+          </div>
         </div>
       </main>
       

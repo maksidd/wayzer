@@ -64,9 +64,10 @@ export default function AuthPage() {
       email: "",
       password: "",
       confirmPassword: "",
+      interests: [],
+      // Эти поля будут заполняться на странице профиля
       fullName: "",
       age: undefined,
-      interests: [],
       bio: "",
     },
   });

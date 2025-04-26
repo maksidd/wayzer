@@ -13,20 +13,52 @@ interface RouteMapProps {
 declare global {
   interface Window {
     google: any;
+    initMap: () => void;
   }
 }
 
 export default function RouteMap({ routes, selectedRouteId, onRouteSelect }: RouteMapProps) {
   const { t } = useTranslation();
   const mapRef = useRef<HTMLDivElement>(null);
-  const googleMapRef = useRef<google.maps.Map | null>(null);
-  const markersRef = useRef<Map<number, google.maps.Marker>>(new Map());
-  const pathsRef = useRef<Map<number, google.maps.Polyline>>(new Map());
+  const googleMapRef = useRef<any>(null);
+  const markersRef = useRef<Map<number, any>>(new Map());
+  const pathsRef = useRef<Map<number, any>>(new Map());
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
+
+  // Загрузка Google Maps script
+  useEffect(() => {
+    if (window.google?.maps || document.getElementById('google-maps-script')) {
+      setScriptLoaded(true);
+      return;
+    }
+
+    // Создаем глобальную функцию обратного вызова
+    window.initMap = () => {
+      setScriptLoaded(true);
+    };
+
+    // Создаем элемент скрипта
+    const script = document.createElement('script');
+    script.id = 'google-maps-script';
+    script.src = `https://maps.googleapis.com/maps/api/js?callback=initMap`;
+    script.async = true;
+    script.defer = true;
+    script.onerror = () => {
+      console.error('Google Maps script failed to load');
+    };
+
+    // Добавляем скрипт в head документа
+    document.head.appendChild(script);
+
+    return () => {
+      window.initMap = () => {}; // Очищаем глобальную функцию
+    };
+  }, []);
 
   // Initialize map
   useEffect(() => {
-    if (!mapRef.current || googleMapRef.current) return;
+    if (!scriptLoaded || !mapRef.current || googleMapRef.current) return;
     
     try {
       if (!window.google || !window.google.maps) {
@@ -48,7 +80,7 @@ export default function RouteMap({ routes, selectedRouteId, onRouteSelect }: Rou
     } catch (error) {
       console.error('Error initializing Google Maps:', error);
     }
-  }, []);
+  }, [scriptLoaded]);
 
   // Add route markers and paths to the map
   useEffect(() => {
@@ -232,18 +264,18 @@ export default function RouteMap({ routes, selectedRouteId, onRouteSelect }: Rou
   };
 
   return (
-    <div className="map-container bg-gray-100 rounded-lg overflow-hidden relative" ref={mapRef}>
+    <div className="map-container h-[350px] md:h-[450px] lg:h-[550px] bg-gray-100 rounded-lg overflow-hidden relative shadow-sm" ref={mapRef}>
       {!mapLoaded && (
         <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
           <div className="text-center p-4">
-            <i className="fas fa-map-marked-alt text-5xl text-gray-400 mb-3"></i>
+            <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-2" />
             <p className="text-gray-500 text-sm">{t('map.loading')}</p>
           </div>
         </div>
       )}
       
       {/* Map Controls */}
-      <div className="absolute top-4 right-4 bg-white rounded-lg shadow-md">
+      <div className="absolute top-4 right-4 bg-white rounded-lg shadow-md z-10">
         <Button
           variant="ghost"
           size="icon"
