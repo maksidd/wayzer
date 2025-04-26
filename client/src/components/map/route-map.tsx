@@ -26,169 +26,208 @@ export default function RouteMap({ routes, selectedRouteId, onRouteSelect }: Rou
 
   // Initialize map
   useEffect(() => {
-    if (!mapRef.current || !window.google || googleMapRef.current) return;
+    if (!mapRef.current || googleMapRef.current) return;
+    
+    try {
+      if (!window.google || !window.google.maps) {
+        console.error('Google Maps API not loaded');
+        return;
+      }
+      
+      const map = new window.google.maps.Map(mapRef.current, {
+        center: { lat: 40, lng: 0 }, // Default center
+        zoom: 3,
+        mapTypeId: 'roadmap',
+        fullscreenControl: false,
+        streetViewControl: false,
+        mapTypeControl: false,
+      });
 
-    const map = new window.google.maps.Map(mapRef.current, {
-      center: { lat: 40, lng: 0 }, // Default center
-      zoom: 3,
-      mapTypeId: 'roadmap',
-      fullscreenControl: false,
-      streetViewControl: false,
-      mapTypeControl: false,
-    });
-
-    googleMapRef.current = map;
-    setMapLoaded(true);
+      googleMapRef.current = map;
+      setMapLoaded(true);
+    } catch (error) {
+      console.error('Error initializing Google Maps:', error);
+    }
   }, []);
 
   // Add route markers and paths to the map
   useEffect(() => {
-    if (!mapLoaded || !googleMapRef.current || !routes.length) return;
+    if (!mapLoaded || !googleMapRef.current) return;
+    if (!routes || routes.length === 0) return;
 
-    const map = googleMapRef.current;
-    const infoWindow = new window.google.maps.InfoWindow();
-    const bounds = new window.google.maps.LatLngBounds();
+    try {
+      const map = googleMapRef.current;
+      const infoWindow = new window.google.maps.InfoWindow();
+      const bounds = new window.google.maps.LatLngBounds();
 
-    // Clear existing markers
-    markersRef.current.forEach(marker => marker.setMap(null));
-    markersRef.current.clear();
+      // Clear existing markers
+      markersRef.current.forEach(marker => marker.setMap(null));
+      markersRef.current.clear();
 
-    // Clear existing paths
-    pathsRef.current.forEach(path => path.setMap(null));
-    pathsRef.current.clear();
+      // Clear existing paths
+      pathsRef.current.forEach(path => path.setMap(null));
+      pathsRef.current.clear();
 
-    // Add markers and paths for each route
-    routes.forEach(route => {
-      if (!route.startLat || !route.startLng || !route.endLat || !route.endLng) return;
-      
-      const startLatLng = new window.google.maps.LatLng(
-        parseFloat(route.startLat), 
-        parseFloat(route.startLng)
-      );
-      
-      const endLatLng = new window.google.maps.LatLng(
-        parseFloat(route.endLat), 
-        parseFloat(route.endLng)
-      );
+      // Add markers and paths for each route
+      routes.forEach(route => {
+        if (!route.startLat || !route.startLng || !route.endLat || !route.endLng) return;
+        
+        try {
+          const startLatLng = new window.google.maps.LatLng(
+            parseFloat(route.startLat), 
+            parseFloat(route.startLng)
+          );
+          
+          const endLatLng = new window.google.maps.LatLng(
+            parseFloat(route.endLat), 
+            parseFloat(route.endLng)
+          );
 
-      // Create start marker
-      const startMarker = new window.google.maps.Marker({
-        position: startLatLng,
-        map,
-        title: route.startPoint,
-        icon: {
-          url: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png',
+          // Create start marker
+          const startMarker = new window.google.maps.Marker({
+            position: startLatLng,
+            map,
+            title: route.startPoint,
+            icon: {
+              url: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png',
+            }
+          });
+
+          // Create end marker
+          const endMarker = new window.google.maps.Marker({
+            position: endLatLng,
+            map,
+            title: route.endPoint,
+            icon: {
+              url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+            }
+          });
+
+          // Add info window to markers
+          const routeInfo = `
+            <div style="width: 200px;">
+              <h3 style="font-weight: bold; margin-bottom: 5px;">${route.title}</h3>
+              <p style="font-size: 12px; margin-bottom: 5px;">${route.startPoint} → ${route.endPoint}</p>
+              <p style="font-size: 12px;">${new Date(route.date).toLocaleDateString()}</p>
+            </div>
+          `;
+
+          startMarker.addListener('click', () => {
+            infoWindow.setContent(routeInfo);
+            infoWindow.open(map, startMarker);
+            onRouteSelect(route.id);
+          });
+
+          endMarker.addListener('click', () => {
+            infoWindow.setContent(routeInfo);
+            infoWindow.open(map, endMarker);
+            onRouteSelect(route.id);
+          });
+
+          // Draw path between start and end
+          const path = new window.google.maps.Polyline({
+            path: [startLatLng, endLatLng],
+            geodesic: true,
+            strokeColor: route.id === selectedRouteId ? '#2563EB' : '#999999',
+            strokeOpacity: route.id === selectedRouteId ? 1.0 : 0.7,
+            strokeWeight: route.id === selectedRouteId ? 4 : 2,
+            map
+          });
+
+          path.addListener('click', () => {
+            onRouteSelect(route.id);
+          });
+
+          // Store markers and path
+          markersRef.current.set(route.id, startMarker);
+          markersRef.current.set(-route.id, endMarker); // Use negative ID for end marker
+          pathsRef.current.set(route.id, path);
+
+          // Extend bounds
+          bounds.extend(startLatLng);
+          bounds.extend(endLatLng);
+        } catch (err) {
+          console.error('Error processing route:', route.id, err);
         }
       });
 
-      // Create end marker
-      const endMarker = new window.google.maps.Marker({
-        position: endLatLng,
-        map,
-        title: route.endPoint,
-        icon: {
-          url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
-        }
-      });
-
-      // Add info window to markers
-      const routeInfo = `
-        <div style="width: 200px;">
-          <h3 style="font-weight: bold; margin-bottom: 5px;">${route.title}</h3>
-          <p style="font-size: 12px; margin-bottom: 5px;">${route.startPoint} → ${route.endPoint}</p>
-          <p style="font-size: 12px;">${new Date(route.date).toLocaleDateString()}</p>
-        </div>
-      `;
-
-      startMarker.addListener('click', () => {
-        infoWindow.setContent(routeInfo);
-        infoWindow.open(map, startMarker);
-        onRouteSelect(route.id);
-      });
-
-      endMarker.addListener('click', () => {
-        infoWindow.setContent(routeInfo);
-        infoWindow.open(map, endMarker);
-        onRouteSelect(route.id);
-      });
-
-      // Draw path between start and end
-      const path = new window.google.maps.Polyline({
-        path: [startLatLng, endLatLng],
-        geodesic: true,
-        strokeColor: route.id === selectedRouteId ? '#2563EB' : '#999999',
-        strokeOpacity: route.id === selectedRouteId ? 1.0 : 0.7,
-        strokeWeight: route.id === selectedRouteId ? 4 : 2,
-        map
-      });
-
-      path.addListener('click', () => {
-        onRouteSelect(route.id);
-      });
-
-      // Store markers and path
-      markersRef.current.set(route.id, startMarker);
-      markersRef.current.set(-route.id, endMarker); // Use negative ID for end marker
-      pathsRef.current.set(route.id, path);
-
-      // Extend bounds
-      bounds.extend(startLatLng);
-      bounds.extend(endLatLng);
-    });
-
-    // Fit map to bounds if there are routes
-    if (routes.length > 0) {
-      map.fitBounds(bounds);
+      // Fit map to bounds if there are routes
+      if (routes.length > 0) {
+        map.fitBounds(bounds);
+      }
+    } catch (error) {
+      console.error('Error setting up map routes:', error);
     }
   }, [routes, mapLoaded, selectedRouteId, onRouteSelect]);
 
   // Update path styling when selected route changes
   useEffect(() => {
     if (!mapLoaded || !selectedRouteId) return;
-
-    pathsRef.current.forEach((path, routeId) => {
-      path.setOptions({
-        strokeColor: routeId === selectedRouteId ? '#2563EB' : '#999999',
-        strokeOpacity: routeId === selectedRouteId ? 1.0 : 0.7,
-        strokeWeight: routeId === selectedRouteId ? 4 : 2,
+    
+    try {
+      pathsRef.current.forEach((path, routeId) => {
+        path.setOptions({
+          strokeColor: routeId === selectedRouteId ? '#2563EB' : '#999999',
+          strokeOpacity: routeId === selectedRouteId ? 1.0 : 0.7,
+          strokeWeight: routeId === selectedRouteId ? 4 : 2,
+        });
       });
-    });
+    } catch (error) {
+      console.error('Error updating path styling:', error);
+    }
   }, [selectedRouteId, mapLoaded]);
 
   // Zoom in button
   const handleZoomIn = () => {
-    if (googleMapRef.current) {
-      googleMapRef.current.setZoom(googleMapRef.current.getZoom() + 1);
+    try {
+      if (googleMapRef.current) {
+        googleMapRef.current.setZoom(googleMapRef.current.getZoom() + 1);
+      }
+    } catch (error) {
+      console.error('Error zooming in:', error);
     }
   };
 
   // Zoom out button
   const handleZoomOut = () => {
-    if (googleMapRef.current) {
-      googleMapRef.current.setZoom(googleMapRef.current.getZoom() - 1);
+    try {
+      if (googleMapRef.current) {
+        googleMapRef.current.setZoom(googleMapRef.current.getZoom() - 1);
+      }
+    } catch (error) {
+      console.error('Error zooming out:', error);
     }
   };
 
   // Center on user location
   const handleCenterOnUser = () => {
-    if (navigator.geolocation && googleMapRef.current) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const userLatLng = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          
-          googleMapRef.current?.setCenter(userLatLng);
-          googleMapRef.current?.setZoom(13);
-        },
-        () => {
-          // Handle geolocation error
-          alert(t('map.location_error'));
-        }
-      );
-    } else {
-      alert(t('map.geolocation_not_supported'));
+    try {
+      if (navigator.geolocation && googleMapRef.current) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            try {
+              const userLatLng = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+              };
+              
+              googleMapRef.current?.setCenter(userLatLng);
+              googleMapRef.current?.setZoom(13);
+            } catch (error) {
+              console.error('Error centering map:', error);
+            }
+          },
+          () => {
+            // Handle geolocation error
+            console.error('Geolocation error');
+            alert(t('map.location_error'));
+          }
+        );
+      } else {
+        alert(t('map.geolocation_not_supported'));
+      }
+    } catch (error) {
+      console.error('Error accessing geolocation:', error);
     }
   };
 
