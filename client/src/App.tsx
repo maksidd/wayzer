@@ -7,6 +7,10 @@ import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
 import ProfilePage from "@/pages/profile-page";
+import EditProfilePage from "@/pages/edit-profile-page";
+import MyRoutesPage from "@/pages/my-routes-page";
+import MyTripsPage from "@/pages/my-trips-page";
+import ReviewsPage from "@/pages/reviews-page";
 import ChatPage from "@/pages/chat-page";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -18,6 +22,10 @@ function Router() {
       <ProtectedRoute path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
+      <ProtectedRoute path="/edit-profile" component={EditProfilePage} />
+      <ProtectedRoute path="/my-routes" component={MyRoutesPage} />
+      <ProtectedRoute path="/my-trips" component={MyTripsPage} />
+      <ProtectedRoute path="/reviews" component={ReviewsPage} />
       <ProtectedRoute path="/chat" component={ChatPage} />
       <Route component={NotFound} />
     </Switch>

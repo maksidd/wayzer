@@ -1,118 +1,58 @@
-import { useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useTranslation } from '@/hooks/use-language';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 import Header from '@/components/layout/header';
 import MobileTabs from '@/components/layout/mobile-tabs';
 import { 
   Card, 
   CardContent, 
   CardDescription, 
-  CardFooter, 
   CardHeader, 
   CardTitle 
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Badge } from '@/components/ui/badge';
-import { Star, Calendar, MapPin, Edit, Save, Loader2 } from 'lucide-react';
+import { 
+  Star, 
+  Calendar, 
+  MapPin, 
+  Edit, 
+  Loader2, 
+  Mail,
+  Phone,
+  Globe,
+  MessageCircle,
+  User,
+  MapIcon
+} from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function ProfilePage() {
   const { user } = useAuth();
   const { t } = useTranslation();
-  const { toast } = useToast();
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedUser, setEditedUser] = useState(user);
+  const [, setLocation] = useLocation();
 
-  // Fetch user's created routes
-  const { data: userRoutes, isLoading: isLoadingRoutes } = useQuery({
-    queryKey: ['/api/routes', 'user', user?.id],
-    queryFn: async () => {
-      const res = await fetch(`/api/routes?user=${user?.id}`);
-      if (!res.ok) throw new Error('Failed to fetch user routes');
-      return res.json();
-    },
-  });
-
-  // Fetch reviews for the user
-  const { data: userReviews, isLoading: isLoadingReviews } = useQuery({
-    queryKey: ['/api/users', user?.id, 'reviews'],
-    queryFn: async () => {
-      const res = await fetch(`/api/users/${user?.id}/reviews`);
-      if (!res.ok) throw new Error('Failed to fetch user reviews');
-      return res.json();
-    },
-    enabled: !!user?.id,
-  });
-
-  // Update user profile mutation
-  const updateProfileMutation = useMutation({
-    mutationFn: async (userData: any) => {
-      const res = await apiRequest('PATCH', `/api/users/${user?.id}`, userData);
-      return await res.json();
-    },
-    onSuccess: (updatedUser) => {
-      queryClient.setQueryData(['/api/user'], updatedUser);
-      toast({
-        title: t('profile.update_success'),
-        description: t('profile.update_success_message'),
-      });
-      setIsEditing(false);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: t('profile.update_error'),
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  if (!user) return null;
-
-  const handleEditToggle = () => {
-    if (isEditing) {
-      // Save changes
-      updateProfileMutation.mutate(editedUser);
-    } else {
-      // Enable editing
-      setEditedUser(user);
-      setIsEditing(true);
-    }
+  // Format date helper
+  const formatDate = (dateString: string | Date) => {
+    const date = new Date(dateString);
+    return format(date, 'MMM d, yyyy');
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setEditedUser({ ...editedUser, [name]: value });
-  };
-
+  // Get initials from name
   const getInitials = (name: string) => {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
   };
 
-  const formatDate = (dateString: string | Date) => {
-    const date = new Date(dateString);
-    return format(date, 'MMM d, yyyy');
+  // Get display name (full name or username)
+  const getDisplayName = () => {
+    if (!user) return '';
+    return user.fullName || user.username;
   };
+
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -120,237 +60,300 @@ export default function ProfilePage() {
       
       <main className="container mx-auto px-4 py-6 flex-1">
         <div className="max-w-4xl mx-auto">
-          <div className="md:flex gap-6">
-            {/* Left Column - Profile Card */}
-            <div className="md:w-1/3 mb-6 md:mb-0">
+          {/* Profile Header & Actions */}
+          <div className="flex flex-col md:flex-row justify-between items-start mb-6">
+            <div className="flex items-center mb-4 md:mb-0">
+              <Avatar className="h-16 w-16 mr-4">
+                <AvatarImage src={user.avatar || ''} />
+                <AvatarFallback className="text-xl">{getInitials(getDisplayName())}</AvatarFallback>
+              </Avatar>
+              <div>
+                <h1 className="text-2xl font-bold">{getDisplayName()}</h1>
+                <p className="text-gray-500">@{user.username}</p>
+                {user.rating > 0 && (
+                  <div className="flex items-center text-amber-400 mt-1">
+                    <Star className="h-4 w-4 fill-current" />
+                    <span className="ml-1 text-gray-700">{user.rating.toFixed(1)}/5</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setLocation('/edit-profile')}
+                className="flex items-center"
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                {t('profile.edit_profile')}
+              </Button>
+              
+              <Button
+                variant="outline"
+                onClick={() => setLocation('/my-routes')}
+                className="flex items-center"
+              >
+                <MapIcon className="h-4 w-4 mr-2" />
+                {t('profile.my_routes')}
+              </Button>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Left Column - About Me */}
+            <div className="space-y-6">
               <Card>
-                <CardContent className="pt-6">
-                  <div className="flex flex-col items-center">
-                    <Avatar className="h-24 w-24 mb-4">
-                      <AvatarImage src={user.avatar || ''} />
-                      <AvatarFallback className="text-xl">{getInitials(user.fullName)}</AvatarFallback>
-                    </Avatar>
+                <CardHeader>
+                  <CardTitle className="text-lg">{t('profile.about')}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <p className="text-gray-700">
+                      {user.bio || t('profile.no_bio')}
+                    </p>
+                  </div>
+                  
+                  <div className="pt-4 border-t">
+                    <div className="flex items-center mb-3">
+                      <User className="h-4 w-4 text-gray-400 mr-2" />
+                      <span className="text-sm text-gray-500">{t('profile.age')}:</span>
+                      <span className="ml-auto">{user.age || t('profile.not_specified')}</span>
+                    </div>
                     
-                    {isEditing ? (
-                      <Input
-                        className="text-center font-semibold text-xl mb-1"
-                        name="fullName"
-                        value={editedUser.fullName}
-                        onChange={handleInputChange}
-                      />
-                    ) : (
-                      <h2 className="font-semibold text-xl mb-1">{user.fullName}</h2>
-                    )}
+                    <div className="flex items-center mb-3">
+                      <User className="h-4 w-4 text-gray-400 mr-2" />
+                      <span className="text-sm text-gray-500">{t('profile.gender')}:</span>
+                      <span className="ml-auto">{user.gender ? t(`profile.gender_${user.gender}`) : t('profile.not_specified')}</span>
+                    </div>
                     
-                    <p className="text-gray-500 mb-2">@{user.username}</p>
+                    <div className="flex items-center mb-3">
+                      <MapPin className="h-4 w-4 text-gray-400 mr-2" />
+                      <span className="text-sm text-gray-500">{t('profile.location')}:</span>
+                      <span className="ml-auto">{user.location || t('profile.not_specified')}</span>
+                    </div>
                     
-                    {user.rating > 0 && (
-                      <div className="flex items-center text-amber-400 mb-4">
-                        <Star className="h-5 w-5 fill-current" />
-                        <Star className="h-5 w-5 fill-current" />
-                        <Star className="h-5 w-5 fill-current" />
-                        <Star className="h-5 w-5 fill-current" />
-                        <Star className="h-5 w-5 text-gray-300" />
-                        <span className="ml-2 text-gray-700">{user.rating}/5</span>
-                      </div>
-                    )}
-                    
-                    <Button
-                      variant={isEditing ? "default" : "outline"}
-                      className="mb-4 w-full"
-                      onClick={handleEditToggle}
-                      disabled={updateProfileMutation.isPending}
-                    >
-                      {updateProfileMutation.isPending ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : isEditing ? (
-                        <Save className="h-4 w-4 mr-2" />
-                      ) : (
-                        <Edit className="h-4 w-4 mr-2" />
-                      )}
-                      {isEditing ? t('profile.save_profile') : t('profile.edit_profile')}
-                    </Button>
-                    
-                    <div className="w-full space-y-4">
-                      {isEditing ? (
-                        <>
-                          <div>
-                            <Label>{t('profile.age')}</Label>
-                            <Input
-                              type="number"
-                              name="age"
-                              value={editedUser.age || ''}
-                              onChange={handleInputChange}
-                            />
-                          </div>
-                          
-                          <div>
-                            <Label>{t('profile.bio')}</Label>
-                            <Textarea
-                              name="bio"
-                              value={editedUser.bio || ''}
-                              onChange={handleInputChange}
-                              rows={4}
-                            />
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div>
-                            <h3 className="font-medium text-sm text-gray-500">{t('profile.about')}</h3>
-                            <p className="mt-1">{user.bio || t('profile.no_bio')}</p>
-                          </div>
-                          
-                          <div>
-                            <h3 className="font-medium text-sm text-gray-500">{t('profile.age')}</h3>
-                            <p className="mt-1">{user.age || t('profile.not_specified')}</p>
-                          </div>
-                          
-                          <div>
-                            <h3 className="font-medium text-sm text-gray-500">{t('profile.travel_goal')}</h3>
-                            <p className="mt-1">{t(`purpose_types.${user.travelGoal}`)}</p>
-                          </div>
-                        </>
-                      )}
+                    <div className="flex items-center">
+                      <Calendar className="h-4 w-4 text-gray-400 mr-2" />
+                      <span className="text-sm text-gray-500">{t('profile.joined')}:</span>
+                      <span className="ml-auto">{user.createdAt ? formatDate(user.createdAt) : t('profile.not_specified')}</span>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-
-              {!isEditing && (
-                <Card className="mt-4">
-                  <CardHeader>
-                    <CardTitle className="text-lg">{t('profile.interests')}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      {user.interests && user.interests.length > 0 ? (
-                        user.interests.map((interest, index) => (
-                          <Badge key={index} variant="secondary">
-                            {t(`interests.${interest}`)}
-                          </Badge>
-                        ))
-                      ) : (
-                        <p className="text-gray-500 text-sm">{t('profile.no_interests')}</p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">{t('profile.interests')}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {user.interests && user.interests.length > 0 ? (
+                      user.interests.map((interest, index) => (
+                        <Badge key={index} variant="secondary">
+                          {t(`interests.${interest}`)}
+                        </Badge>
+                      ))
+                    ) : (
+                      <p className="text-gray-500 text-sm">{t('profile.no_interests')}</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">{t('profile.languages')}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {user.languages && user.languages.length > 0 ? (
+                      user.languages.map((language, index) => (
+                        <Badge key={index} variant="outline">
+                          {language}
+                        </Badge>
+                      ))
+                    ) : (
+                      <p className="text-gray-500 text-sm">{t('profile.no_languages')}</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
             
-            {/* Right Column - Tabs */}
-            <div className="md:w-2/3">
-              <Tabs defaultValue="routes">
-                <TabsList className="w-full">
-                  <TabsTrigger value="routes" className="flex-1">{t('profile.my_routes')}</TabsTrigger>
-                  <TabsTrigger value="trips" className="flex-1">{t('profile.my_trips')}</TabsTrigger>
-                  <TabsTrigger value="reviews" className="flex-1">{t('profile.reviews')}</TabsTrigger>
-                </TabsList>
-                
-                {/* My Routes Tab */}
-                <TabsContent value="routes" className="space-y-4 mt-4">
-                  {isLoadingRoutes ? (
-                    <div className="flex justify-center py-12">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            {/* Middle Column - Photos & Stats */}
+            <div className="md:col-span-2 space-y-6">
+              {/* Photos */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-lg">{t('profile.photos')}</CardTitle>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => setLocation('/edit-profile')}
+                  >
+                    {t('profile.add_photos')}
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  {user.photos && user.photos.length > 0 ? (
+                    <div className="grid grid-cols-3 gap-2">
+                      {user.photos.map((photo, index) => (
+                        <div 
+                          key={index} 
+                          className="aspect-square bg-gray-100 rounded-md bg-cover bg-center"
+                          style={{ backgroundImage: `url(${photo})` }}
+                        ></div>
+                      ))}
                     </div>
-                  ) : userRoutes && userRoutes.length > 0 ? (
-                    userRoutes.map((route) => (
-                      <Card key={route.id}>
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h3 className="font-semibold">{route.title}</h3>
-                              <div className="flex items-center text-sm text-gray-500 mt-1">
-                                <MapPin className="h-4 w-4 mr-1" />
-                                <span>{route.startPoint} → {route.endPoint}</span>
-                              </div>
-                              <div className="flex items-center text-sm text-gray-500 mt-1">
-                                <Calendar className="h-4 w-4 mr-1" />
-                                <span>{formatDate(route.date)}</span>
-                              </div>
-                            </div>
-                            <Badge variant="outline">
-                              {t(`route_types.${route.routeType}`)}
-                            </Badge>
-                          </div>
-                          <p className="text-sm mt-2 text-gray-600 line-clamp-2">{route.description}</p>
-                        </CardContent>
-                      </Card>
-                    ))
                   ) : (
-                    <div className="text-center py-12">
-                      <i className="fas fa-route text-4xl text-gray-300 mb-3"></i>
-                      <p className="text-gray-500">{t('profile.no_routes')}</p>
+                    <div className="text-center py-6 bg-gray-50 rounded-md">
+                      <p className="text-gray-500 text-sm">{t('profile.no_photos')}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+              
+              {/* Statistics */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <MapIcon className="h-10 w-10 mx-auto mb-2 text-primary" />
+                    <h3 className="text-2xl font-bold">
+                      {user.routesCount || '0'}
+                    </h3>
+                    <p className="text-gray-500 text-sm">{t('profile.routes_created')}</p>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <MapPin className="h-10 w-10 mx-auto mb-2 text-primary" />
+                    <h3 className="text-2xl font-bold">
+                      {user.tripsCount || '0'}
+                    </h3>
+                    <p className="text-gray-500 text-sm">{t('profile.trips_joined')}</p>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <Star className="h-10 w-10 mx-auto mb-2 text-primary" />
+                    <h3 className="text-2xl font-bold">
+                      {user.reviewsCount || '0'}
+                    </h3>
+                    <p className="text-gray-500 text-sm">{t('profile.reviews_received')}</p>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              {/* Contact Info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">{t('profile.contact_info')}</CardTitle>
+                  <CardDescription>
+                    {t('profile.contact_description')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {user.email && (
+                    <div className="flex items-center">
+                      <Mail className="h-5 w-5 text-gray-400 mr-2" />
+                      <div>
+                        <h4 className="text-sm font-medium">{t('profile.email')}</h4>
+                        <p className="text-gray-700">{user.email}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {user.phone && (
+                    <div className="flex items-center">
+                      <Phone className="h-5 w-5 text-gray-400 mr-2" />
+                      <div>
+                        <h4 className="text-sm font-medium">{t('profile.phone')}</h4>
+                        <p className="text-gray-700">{user.phone}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {user.telegram && (
+                    <div className="flex items-center">
+                      <MessageCircle className="h-5 w-5 text-gray-400 mr-2" />
+                      <div>
+                        <h4 className="text-sm font-medium">{t('profile.telegram')}</h4>
+                        <p className="text-gray-700">{user.telegram}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {user.whatsapp && (
+                    <div className="flex items-center">
+                      <MessageCircle className="h-5 w-5 text-gray-400 mr-2" />
+                      <div>
+                        <h4 className="text-sm font-medium">{t('profile.whatsapp')}</h4>
+                        <p className="text-gray-700">{user.whatsapp}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {user.website && (
+                    <div className="flex items-center">
+                      <Globe className="h-5 w-5 text-gray-400 mr-2" />
+                      <div>
+                        <h4 className="text-sm font-medium">{t('profile.website')}</h4>
+                        <p className="text-gray-700">
+                          <a href={user.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                            {user.website.replace(/^https?:\/\//, '')}
+                          </a>
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {!user.email && !user.phone && !user.telegram && !user.whatsapp && !user.website && (
+                    <div className="text-center py-3">
+                      <p className="text-gray-500">{t('profile.no_contact_info')}</p>
                       <Button 
                         variant="link" 
-                        onClick={() => window.dispatchEvent(new CustomEvent('open-create-route-modal'))}
+                        size="sm"
+                        onClick={() => setLocation('/edit-profile')}
                       >
-                        {t('profile.create_route')}
+                        {t('profile.add_contact_info')}
                       </Button>
                     </div>
                   )}
-                </TabsContent>
+                </CardContent>
+              </Card>
+              
+              {/* Quick Links */}
+              <div className="flex flex-wrap gap-3">
+                <Button 
+                  onClick={() => setLocation('/my-routes')}
+                  className="flex items-center"
+                >
+                  <MapIcon className="h-4 w-4 mr-2" />
+                  {t('profile.view_all_routes')}
+                </Button>
                 
-                {/* My Trips Tab */}
-                <TabsContent value="trips" className="space-y-4 mt-4">
-                  <div className="text-center py-12">
-                    <i className="fas fa-hiking text-4xl text-gray-300 mb-3"></i>
-                    <p className="text-gray-500">{t('profile.no_trips')}</p>
-                    <Button variant="link" onClick={() => window.location.href = "/"}>
-                      {t('profile.find_trips')}
-                    </Button>
-                  </div>
-                </TabsContent>
+                <Button 
+                  onClick={() => setLocation('/my-trips')}
+                  variant="outline"
+                  className="flex items-center"
+                >
+                  <MapPin className="h-4 w-4 mr-2" />
+                  {t('profile.view_all_trips')}
+                </Button>
                 
-                {/* Reviews Tab */}
-                <TabsContent value="reviews" className="space-y-4 mt-4">
-                  {isLoadingReviews ? (
-                    <div className="flex justify-center py-12">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    </div>
-                  ) : userReviews && userReviews.length > 0 ? (
-                    userReviews.map((review) => (
-                      <Card key={review.id}>
-                        <CardContent className="p-4">
-                          <div className="flex items-start">
-                            <Avatar className="h-10 w-10 mr-3">
-                              <AvatarImage src={review.author?.avatar || ''} />
-                              <AvatarFallback>
-                                {review.author?.username.substring(0, 2).toUpperCase() || 'U'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                              <div className="flex justify-between">
-                                <h3 className="font-medium">{review.author?.username}</h3>
-                                <div className="flex">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star
-                                      key={i}
-                                      className={`h-4 w-4 ${
-                                        i < review.rating ? "text-amber-400 fill-current" : "text-gray-300"
-                                      }`}
-                                    />
-                                  ))}
-                                </div>
-                              </div>
-                              <p className="text-sm text-gray-600 mt-1">{review.comment}</p>
-                              <p className="text-xs text-gray-400 mt-2">
-                                {formatDate(review.createdAt)}
-                              </p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))
-                  ) : (
-                    <div className="text-center py-12">
-                      <i className="fas fa-star text-4xl text-gray-300 mb-3"></i>
-                      <p className="text-gray-500">{t('profile.no_reviews')}</p>
-                    </div>
-                  )}
-                </TabsContent>
-              </Tabs>
+                <Button 
+                  onClick={() => setLocation('/reviews')}
+                  variant="outline"
+                  className="flex items-center"
+                >
+                  <Star className="h-4 w-4 mr-2" />
+                  {t('profile.view_all_reviews')}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
