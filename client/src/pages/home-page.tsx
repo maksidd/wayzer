@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from '@/hooks/use-language';
 import { useAuth } from '@/hooks/use-auth';
@@ -6,13 +6,13 @@ import Header from '@/components/layout/header';
 import MobileTabs from '@/components/layout/mobile-tabs';
 import RouteCard from '@/components/routes/route-card';
 import RouteFilters from '@/components/routes/route-filters';
-import RouteMap from '@/components/map/route-map';
+// Временно отключаем карту
+// import RouteMap from '@/components/map/route-map';
 import CreateRouteModal from '@/components/routes/create-route-modal';
 import MobileFilterMenu from '@/components/routes/mobile-filter-menu';
 import ChatDialog from '@/components/chat/chat-dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Map } from 'lucide-react';
 
 export default function HomePage() {
   const { t } = useTranslation();
@@ -34,16 +34,6 @@ export default function HomePage() {
     }
   });
 
-  // When a route is selected on the map, find it in the list and scroll to it
-  useEffect(() => {
-    if (selectedRouteId) {
-      const routeElement = document.getElementById(`route-${selectedRouteId}`);
-      if (routeElement) {
-        routeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }
-  }, [selectedRouteId]);
-
   // Handle filter changes
   const handleFilterChange = (type: string | null) => {
     setRouteTypeFilter(type);
@@ -63,79 +53,90 @@ export default function HomePage() {
     }
   };
 
+  // Получаем выбранный маршрут
+  const selectedRoute = routes?.find(route => route.id === selectedRouteId);
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
       
-      <main className="container mx-auto md:px-4 md:py-6 flex-1">
-        <div className="md:flex">
-          {/* Left Side: Routes List */}
-          <div className="md:w-1/2 md:pr-3 bg-white md:bg-transparent">
-            {/* Filters */}
-            <div className="p-4">
-              <div className="flex justify-between items-center mb-4">
-                <MobileFilterMenu onFilterApply={handleMobileFilterApply} />
-                
-                <div className="hidden md:block flex-1 mx-4">
-                  <RouteFilters
-                    onFilterChange={handleFilterChange}
-                    currentFilter={routeTypeFilter}
-                  />
-                </div>
-                
-                <div className="flex items-center">
-                  <span className="text-sm text-gray-500 mr-2 hidden md:inline">{t('home.sort_by')}:</span>
-                  <select className="text-sm border-none bg-transparent focus:outline-none focus:ring-0 text-gray-700 font-medium">
-                    <option value="popular">{t('home.popular')}</option>
-                    <option value="newest">{t('home.newest')}</option>
-                    <option value="closest">{t('home.closest')}</option>
-                  </select>
-                </div>
-              </div>
-              
-              <h1 className="text-xl font-bold text-gray-800">{t('home.popular_routes')}</h1>
+      <main className="container mx-auto px-4 py-6 flex-1">
+        {/* Фильтры маршрутов */}
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <MobileFilterMenu onFilterApply={handleMobileFilterApply} />
+            
+            <div className="hidden md:block flex-1 mx-4">
+              <RouteFilters
+                onFilterChange={handleFilterChange}
+                currentFilter={routeTypeFilter}
+              />
             </div>
             
-            {/* Routes List */}
-            <div className="px-4 pb-16 md:pb-4 space-y-4 md:h-[calc(100vh-12rem)] md:overflow-y-auto">
-              {isLoading ? (
-                <div className="flex justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : routes && routes.length > 0 ? (
-                routes.map((route) => (
-                  <div key={route.id} id={`route-${route.id}`}>
-                    <RouteCard 
-                      route={route} 
-                      onRouteSelect={handleRouteSelect} 
-                    />
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-12">
-                  <i className="fas fa-route text-4xl text-gray-300 mb-3"></i>
-                  <p className="text-gray-500">{t('home.no_routes_found')}</p>
-                  {routeTypeFilter && (
-                    <Button 
-                      variant="link" 
-                      onClick={() => setRouteTypeFilter(null)}
-                    >
-                      {t('home.clear_filters')}
-                    </Button>
-                  )}
-                </div>
-              )}
+            <div className="flex items-center">
+              <span className="text-sm text-gray-500 mr-2 hidden md:inline">{t('home.sort_by')}:</span>
+              <select className="text-sm border-none bg-transparent focus:outline-none focus:ring-0 text-gray-700 font-medium">
+                <option value="popular">{t('home.popular')}</option>
+                <option value="newest">{t('home.newest')}</option>
+                <option value="closest">{t('home.closest')}</option>
+              </select>
             </div>
           </div>
           
-          {/* Right Side: Map */}
-          <div className="md:w-1/2 md:pl-3">
-            <RouteMap 
-              routes={routes || []} 
-              selectedRouteId={selectedRouteId}
-              onRouteSelect={handleRouteSelect}
-            />
+          <h1 className="text-xl font-bold text-gray-800">{t('home.popular_routes')}</h1>
+        </div>
+        
+        {/* Заголовок показывающий информацию о выбранном маршруте */}
+        {selectedRoute && (
+          <div className="mb-6 p-4 bg-white rounded-lg shadow-sm">
+            <h2 className="text-lg font-semibold">{selectedRoute.title}</h2>
+            <div className="flex text-sm text-gray-500 mt-1">
+              <span>{selectedRoute.startPoint} → {selectedRoute.endPoint}</span>
+              <span className="mx-2">•</span>
+              <span>{new Date(selectedRoute.date).toLocaleDateString()}</span>
+            </div>
+            <p className="mt-2 text-gray-700">{selectedRoute.description}</p>
           </div>
+        )}
+
+        {/* Содержимое */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {isLoading ? (
+            <div className="col-span-full flex justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : routes && routes.length > 0 ? (
+            routes.map((route) => (
+              <div key={route.id} id={`route-${route.id}`}>
+                <RouteCard 
+                  route={route} 
+                  onRouteSelect={handleRouteSelect} 
+                />
+              </div>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-12">
+              <i className="fas fa-route text-4xl text-gray-300 mb-3"></i>
+              <p className="text-gray-500">{t('home.no_routes_found')}</p>
+              {routeTypeFilter && (
+                <Button 
+                  variant="link" 
+                  onClick={() => setRouteTypeFilter(null)}
+                >
+                  {t('home.clear_filters')}
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Заглушка вместо карты */}
+        <div className="mt-8 p-6 bg-gray-100 border border-gray-200 rounded-lg text-center">
+          <Map className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+          <p className="text-gray-500">{t('home.map_placeholder')}</p>
+          <Button variant="outline" className="mt-2" onClick={() => alert('Карта временно недоступна')}>
+            {t('home.view_on_map')}
+          </Button>
         </div>
       </main>
       

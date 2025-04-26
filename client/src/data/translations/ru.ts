@@ -120,7 +120,9 @@ export const ru = {
     newest: "Новизне",
     closest: "Близости",
     no_routes_found: "Маршруты не найдены",
-    clear_filters: "Очистить фильтры"
+    clear_filters: "Очистить фильтры",
+    map_placeholder: "Карта временно недоступна",
+    view_on_map: "Посмотреть на карте"
   },
   chat: {
     conversations: "Беседы",
