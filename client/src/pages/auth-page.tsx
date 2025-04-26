@@ -79,11 +79,7 @@ export default function AuthPage() {
     registerMutation.mutate(data);
   };
 
-  const interestOptions = [
-    "hiking", "cycling", "road_trips", "camping", 
-    "city_tours", "beach", "train_travel", "festivals", 
-    "food_tours", "mountain_climbing"
-  ];
+
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -278,39 +274,7 @@ export default function AuthPage() {
 
                       </div>
 
-                      <FormField
-                        control={registerForm.control}
-                        name="interests"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t("auth.interests")}</FormLabel>
-                            <div className="flex flex-wrap gap-2">
-                              {interestOptions.map(interest => (
-                                <Button
-                                  key={interest}
-                                  type="button"
-                                  variant={field.value?.includes(interest) ? "default" : "outline"}
-                                  size="sm"
-                                  onClick={() => {
-                                    const currentInterests = field.value || [];
-                                    if (currentInterests.includes(interest)) {
-                                      field.onChange(currentInterests.filter(i => i !== interest));
-                                    } else {
-                                      field.onChange([...currentInterests, interest]);
-                                    }
-                                  }}
-                                >
-                                  {t(`interests.${interest}`)}
-                                </Button>
-                              ))}
-                            </div>
-                            <FormDescription>
-                              {t("auth.select_interests")}
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+
 
                       <FormField
                         control={registerForm.control}
