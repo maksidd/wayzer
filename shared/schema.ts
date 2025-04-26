@@ -12,7 +12,6 @@ export const users = pgTable("users", {
   avatar: text("avatar"),
   age: integer("age"),
   interests: text("interests").array(),
-  travelGoal: text("travel_goal"),
   bio: text("bio"),
   verified: boolean("verified").default(false),
   rating: integer("rating").default(0),

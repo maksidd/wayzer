@@ -67,7 +67,6 @@ export default function AuthPage() {
       fullName: "",
       age: undefined,
       interests: [],
-      travelGoal: "tourism",
       bio: "",
     },
   });
@@ -276,32 +275,7 @@ export default function AuthPage() {
                           )}
                         />
 
-                        <FormField
-                          control={registerForm.control}
-                          name="travelGoal"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>{t("auth.travel_goal")}</FormLabel>
-                              <Select
-                                defaultValue={field.value}
-                                onValueChange={field.onChange}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder={t("auth.select_goal")} />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="tourism">{t("purpose_types.tourism")}</SelectItem>
-                                  <SelectItem value="friends">{t("purpose_types.friends")}</SelectItem>
-                                  <SelectItem value="romance">{t("purpose_types.romance")}</SelectItem>
-                                  <SelectItem value="company">{t("purpose_types.company")}</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+
                       </div>
 
                       <FormField
