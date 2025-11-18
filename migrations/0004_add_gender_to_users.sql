@@ -1,0 +1,1 @@
+ALTER TABLE users ADD COLUMN gender text CHECK (gender IN ('male', 'female', 'other')); 

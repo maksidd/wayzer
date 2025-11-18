@@ -1,0 +1,1 @@
+ALTER TABLE trips ADD COLUMN participant_gender text NOT NULL DEFAULT 'any'; 

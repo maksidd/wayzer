@@ -1,0 +1,559 @@
+import { useState } from "react";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { MapPin, Users, User, Search, Filter, Car, Plane, Train, Bike, PersonStanding, Ship, Plus, Heart, Zap, Mountain, Landmark, Circle, CircleDot, Wind, Utensils, TreePine, PartyPopper, Flower2, Squirrel, X } from "lucide-react";
+import { Header } from "@/components/ui/header";
+import { Link, useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
+import { TripDetailModal } from "@/components/trip-detail-modal";
+import { FavoriteButton } from "@/components/favorite-button";
+import { useRef, useEffect } from "react";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import type { TripType } from "@shared/schema";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
+import { UserProfileModal } from "@/components/user-profile-modal";
+
+const transportIcons: Record<string, any> = {
+  car: Car,
+  plane: Plane,
+  bike: Bike,
+  walk: PersonStanding,
+  scooter: Bike,             // Scooter — bicycle (visually similar)
+  monowheel: CircleDot,      // Monowheel — circle with dot
+  motorcycle: Wind,          // Motorcycle — wind
+  sea: Ship,
+  mountains: Mountain,
+  sights: Landmark,
+  fest: Users,               // Festival — crowd
+  picnic: Utensils,          // Picnic — utensils
+  camping: TreePine,         // Camping — pine tree
+  party: PartyPopper,        // Party — party popper
+  retreat: Flower2,          // Retreat — flower
+  pets: Squirrel,            // Pets — full-height squirrel
+  other: Circle,
+};
+
+const transportNames = {
+  car: "Car",
+  plane: "Plane", 
+  bike: "Bicycle",
+  walk: "Walk",
+  scooter: "Scooter",
+  monowheel: "Monowheel",
+  motorcycle: "Motorcycle",
+  sea: "Sea",
+  mountains: "Mountains",
+  sights: "Sights",
+  other: "Other",
+} as const;
+
+const LIMIT = 40;
+
+export default function Trips() {
+  const [location, setLocation] = useLocation();
+  const { toast } = useToast();
+  const [searchCity, setSearchCity] = useState("");
+  const [selectedType, setSelectedType] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState<string | null>("");
+  const [dateTo, setDateTo] = useState<string | null>("");
+  const [dateFromPickerOpen, setDateFromPickerOpen] = useState(false);
+  const [dateToPickerOpen, setDateToPickerOpen] = useState(false);
+  const [cityInput, setCityInput] = useState("");
+  const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
+  const cityInputRef = useRef<HTMLInputElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const [profileUserId, setProfileUserId] = useState<string | null>(null);
+
+  // Extract trip ID from URL if present
+  const selectedTripId = location.startsWith('/trips/') && location !== '/trips' 
+    ? location.split('/trips/')[1] 
+    : null;
+
+  const { data: user } = useQuery({
+    queryKey: ["/api/users/me"],
+    queryFn: async () => {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return null;
+
+      const response = await fetch("/api/users/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) return null;
+      return response.json();
+    },
+    retry: false,
+  });
+
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+    isLoading,
+    isError,
+  } = useInfiniteQuery({
+    queryKey: ["/api/trips", searchCity, selectedType, dateFrom, dateTo],
+    queryFn: async ({ pageParam = 0 }) => {
+      const params = new URLSearchParams();
+      if (searchCity) params.append("city", searchCity);
+      if (selectedType && selectedType !== "all") params.append("type", selectedType);
+      if (dateFrom && dateFrom !== "") params.append("date_from", dateFrom);
+      if (dateTo && dateTo !== "") params.append("date_to", dateTo);
+      params.append("limit", String(LIMIT));
+      params.append("offset", String(pageParam));
+      const response = await fetch(`/api/trips?${params.toString()}`);
+      if (!response.ok) throw new Error("Failed to load trips");
+      return response.json();
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      // If server returned empty array — no more data
+      if (!lastPage || lastPage.length === 0) return undefined;
+      // Otherwise continue offsetting by total number of already loaded records
+      return allPages.flat().length;
+    },
+    refetchOnWindowFocus: false,
+    initialPageParam: 0,
+  });
+
+  // IntersectionObserver for loading more
+  useEffect(() => {
+    if (!hasNextPage || isFetchingNextPage) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        fetchNextPage();
+      }
+    }, { threshold: 0, rootMargin: '1000px' });
+    if (loadMoreRef.current) observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // Reset on filter change
+  useEffect(() => {
+    refetch();
+  }, [searchCity, selectedType, dateFrom, dateTo, refetch]);
+
+  const trips = data?.pages?.flat() || [];
+
+  // Get cities with filtering
+  const { data: cityOptions = [], isLoading: citiesLoading } = useQuery({
+    queryKey: ["/api/cities", cityInput],
+    queryFn: async () => {
+      const resp = await fetch(`/api/cities?q=${encodeURIComponent(cityInput)}&limit=15`);
+      if (!resp.ok) throw new Error("Failed to load cities");
+      return resp.json();
+    },
+    enabled: cityDropdownOpen,
+  });
+
+  // Get trip types from API
+  const { data: tripTypes = [], isLoading: tripTypesLoading, error: tripTypesError } = useQuery<TripType[]>({
+    queryKey: ["/api/trip-types"],
+    queryFn: async () => {
+      const resp = await fetch("/api/trip-types");
+      if (!resp.ok) throw new Error("Failed to load trip types");
+      return resp.json();
+    },
+  });
+
+  // Favorite trips list (for displaying active heart)
+  const { data: favoriteTrips = [] } = useQuery<any[]>({
+    queryKey: ["/api/favorites", user?.id],
+    enabled: !!user, // only if logged in
+    queryFn: async () => {
+      const resp = await fetch('/api/favorites', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}` || ''
+        }
+      });
+      const data = await resp.json();
+      return data;
+    }
+  });
+
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken");
+    queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
+    toast({
+      title: "Logged out",
+      description: "Goodbye!",
+    });
+    setLocation("/");
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("ru-RU", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  };
+
+  const handleAuthClick = (mode?: "login" | "register") => {
+    const authUrl = mode === "register" ? "/auth?mode=register" : "/auth";
+    setLocation(authUrl);
+  };
+
+  const handleTripClick = (tripId: string) => {
+    console.log("Trip clicked:", tripId);
+    setLocation(`/trips/${tripId}`);
+  };
+
+  const handleCloseModal = () => {
+    console.log("Closing modal");
+    setLocation("/trips");
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Search and Filter Section */}
+        <Card className="mb-8 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+          <CardHeader>
+            <CardTitle className="flex items-center text-gray-900 dark:text-white">
+              <Search className="h-5 w-5 mr-2" />
+              Search routes
+            </CardTitle>
+            <p className="text-gray-600 dark:text-gray-400">
+              Browse available routes and join trips
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  City
+                </label>
+                <div className="relative">
+                  <Input
+                    ref={cityInputRef}
+                    value={cityInput}
+                    onFocus={() => setCityDropdownOpen(true)}
+                    onBlur={() => setTimeout(() => setCityDropdownOpen(false), 150)}
+                    onChange={e => {
+                      setCityInput(e.target.value);
+                      setSearchCity(e.target.value);
+                    }}
+                    placeholder="Enter city or select from list"
+                    autoComplete="off"
+                  />
+                  {cityDropdownOpen && cityOptions.length > 0 && (
+                    <div className="absolute left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-[10000] max-h-96 overflow-y-auto">
+                      {cityOptions.map((city: any) => (
+                        <div
+                          key={city.id}
+                          className="px-4 py-2 cursor-pointer hover:bg-accent text-sm"
+                          onMouseDown={() => {
+                            setCityInput(city.name);
+                            setSearchCity(city.name);
+                            setCityDropdownOpen(false);
+                            cityInputRef.current?.blur();
+                          }}
+                        >
+                          {city.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Route type
+                </label>
+                <Select value={selectedType} onValueChange={setSelectedType}>
+                  <SelectTrigger className="border-gray-300 dark:border-gray-600">
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <TooltipProvider>
+                    <SelectContent>
+                      <SelectItem value="all">All types</SelectItem>
+                      {tripTypesLoading && (
+                        <div className="px-4 py-2 text-sm text-gray-500">Loading...</div>
+                      )}
+                      {tripTypesError && (
+                        <div className="px-4 py-2 text-sm text-red-500">Loading error</div>
+                      )}
+                      {!tripTypesLoading && !tripTypesError && tripTypes.map((type) => {
+                        const Icon = transportIcons[type.id as keyof typeof transportIcons] || Circle;
+                        return (
+                          <Tooltip key={type.id}>
+                            <TooltipTrigger asChild>
+                              <SelectItem value={type.id}>
+                                <div className="flex items-center space-x-2">
+                                  <Icon className="h-4 w-4" />
+                                  <span>{type.name}</span>
+                                </div>
+                              </SelectItem>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs break-words" side="right" align="center">
+                              {type.description || type.name}
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      })}
+                    </SelectContent>
+                  </TooltipProvider>
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Date from
+                </label>
+                <Popover open={dateFromPickerOpen} onOpenChange={setDateFromPickerOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="w-full h-10 px-3 border border-gray-300 dark:border-gray-600 rounded-md bg-background text-sm text-gray-900 dark:text-white flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                      tabIndex={0}
+                      aria-label="Select date from"
+                      onClick={() => setDateFromPickerOpen(true)}
+                    >
+                      <span className={dateFrom ? "" : "text-black text-sm"}>
+                        {dateFrom ? format(new Date(dateFrom), "d MMMM yyyy", { locale: ru }) : "Any"}
+                      </span>
+                      {dateFrom && (
+                        <X
+                          className="h-4 w-4 ml-2 text-gray-400 hover:text-gray-700 dark:hover:text-white"
+                          onClick={e => {
+                            e.stopPropagation();
+                            setDateFrom("");
+                            setDateFromPickerOpen(false);
+                          }}
+                          tabIndex={0}
+                          aria-label="Clear date from"
+                        />
+                      )}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="p-0.5 w-auto min-w-[140px] z-[9999] text-xs">
+                    <Calendar
+                      mode="single"
+                      selected={dateFrom ? new Date(dateFrom) : undefined}
+                      onSelect={d => {
+                        if (d) {
+                          const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                          setDateFrom(iso);
+                          setDateFromPickerOpen(false);
+                        }
+                      }}
+                      locale={ru}
+                      className="!gap-1 [&_.rdp-day]:h-6 [&_.rdp-day]:w-6 [&_.rdp-day]:text-xs"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Date to
+                </label>
+                <Popover open={dateToPickerOpen} onOpenChange={setDateToPickerOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="w-full h-10 px-3 border border-gray-300 dark:border-gray-600 rounded-md bg-background text-sm text-gray-900 dark:text-white flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                      tabIndex={0}
+                      aria-label="Select date to"
+                      onClick={() => setDateToPickerOpen(true)}
+                    >
+                      <span className={dateTo ? "" : "text-black text-sm"}>
+                        {dateTo ? format(new Date(dateTo), "d MMMM yyyy", { locale: ru }) : "Any"}
+                      </span>
+                      {dateTo && (
+                        <X
+                          className="h-4 w-4 ml-2 text-gray-400 hover:text-gray-700 dark:hover:text-white"
+                          onClick={e => {
+                            e.stopPropagation();
+                            setDateTo("");
+                            setDateToPickerOpen(false);
+                          }}
+                          tabIndex={0}
+                          aria-label="Clear date to"
+                        />
+                      )}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="p-0.5 w-auto min-w-[140px] z-[9999] text-xs">
+                    <Calendar
+                      mode="single"
+                      selected={dateTo ? new Date(dateTo) : undefined}
+                      onSelect={d => {
+                        if (d) {
+                          const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                          setDateTo(iso);
+                          setDateToPickerOpen(false);
+                        }
+                      }}
+                      locale={ru}
+                      className="!gap-1 [&_.rdp-day]:h-6 [&_.rdp-day]:w-6 [&_.rdp-day]:text-xs"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="flex items-end">
+                <Button 
+                  onClick={() => {
+                    setSearchCity("");
+                    setSelectedType("all");
+                    setDateFrom("");
+                    setDateTo("");
+                  }}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Filter className="h-4 w-4 mr-2" />
+                  Reset
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Trips Grid */}
+        {isLoading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600 dark:text-gray-400">Loading trips...</p>
+          </div>
+        ) : trips.length === 0 ? (
+          <Card className="text-center py-12 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+            <CardContent>
+              <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                No routes found
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                Try changing search parameters or create your own route
+              </p>
+              {user && (
+                <Link href="/create-trip">
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                    Create route
+                  </Button>
+                </Link>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {trips.map((trip: any) => {
+
+              const isFavorite = favoriteTrips?.some((f: any) => (f.id ?? f) === trip.id);
+
+              // Get route type from tripTypes
+              const typeObj = tripTypes.find((t: TripType) => t.id === trip.type);
+              const TypeIcon = (typeObj && transportIcons[typeObj.id as keyof typeof transportIcons]) || transportIcons[trip.type as keyof typeof transportIcons] || Circle;
+              const typeName = typeObj?.name || transportNames[trip.type as keyof typeof transportNames] || trip.type;
+
+              return (
+                <Card
+                  key={trip.id}
+                  className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all cursor-pointer hover:scale-[1.02] overflow-hidden"
+                  onClick={() => handleTripClick(trip.id)}
+                >
+                  <div className="relative w-full h-48">
+                    {trip.mainPhotoUrl ? (
+                      <img
+                        src={trip.mainPhotoUrl}
+                        alt={trip.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          const fallback = document.getElementById(`fallback-${trip.id}`);
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center">
+                        <MapPin className="h-12 w-12 text-white" />
+                      </div>
+                    )}
+                    {/* Route type and city badges — top left corner, city below type */}
+                    <div className="absolute top-3 left-3 z-10 flex flex-col gap-1 items-start">
+                      <Badge variant="secondary" className="flex items-center space-x-1 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md">
+                        <TypeIcon className="h-4 w-4" />
+                        <span className="text-xs">{typeName}</span>
+                      </Badge>
+                      <Badge variant="secondary" className="flex items-center space-x-1 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md">
+                        <MapPin className="h-4 w-4" />
+                        <span className="text-xs">{trip.city}</span>
+                      </Badge>
+                    </div>
+                    {/* Heart — top right corner, closer to corner */}
+                    <div className="absolute top-1 right-1 z-10">
+                      <FavoriteButton tripId={trip.id} initialIsFavorite={!!isFavorite} />
+                    </div>
+                    {/* Creator photo — bottom left corner, raised higher */}
+                    <div className="absolute -bottom-4 left-4 z-10">
+                      <Avatar className="h-14 w-14 ring-4 ring-white dark:ring-gray-900 shadow-lg cursor-pointer" onClick={(e) => { e.stopPropagation(); setProfileUserId(trip.creator.id); }}>
+                        <AvatarImage src={trip.creator.avatarThumbnailUrl || trip.creator.avatarUrl} alt={trip.creator.name} />
+                        <AvatarFallback className="bg-blue-100 text-blue-600 text-lg">
+                          {getInitials(trip.creator.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                  </div>
+                  <CardContent className="pt-8 pb-4 flex flex-col min-h-[180px]">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <CardTitle className="text-lg font-bold text-gray-900 dark:text-white line-clamp-1">{trip.title}</CardTitle>
+                      </div>
+                      <div className="flex items-center text-sm text-gray-500 mb-2 gap-2">
+                        <User className="h-4 w-4 mr-1" />
+                        <span>{trip.creator.name}</span>
+                        <span className="ml-1 text-xs text-gray-400">Organizer</span>
+                      </div>
+                      {trip.description && (
+                        <p className="text-gray-600 dark:text-gray-400 text-sm mb-2 line-clamp-2">{trip.description}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between text-sm text-gray-500 mt-auto">
+                      <span>{trip.date ? format(new Date(trip.date), "d MMMM yyyy", { locale: ru }) : "Any date"}</span>
+                      <span>
+                        <Users className="h-4 w-4 inline" /> {trip.participantsCount || 0}/{trip.maxParticipants}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+            <div ref={loadMoreRef} className="h-8 col-span-full flex items-center justify-center">
+              {isFetchingNextPage && <span className="text-gray-400">Loading...</span>}
+              {!hasNextPage && trips.length > 0 && <span className="text-gray-400">No more routes</span>}
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Trip Detail Modal */}
+      {selectedTripId && (
+        <TripDetailModal
+          tripId={selectedTripId}
+          isOpen={!!selectedTripId}
+          onClose={handleCloseModal}
+        />
+      )}
+      {/* User Profile Modal */}
+      {profileUserId && (
+        <UserProfileModal userId={profileUserId} isOpen={!!profileUserId} onClose={() => setProfileUserId(null)} />
+      )}
+    </div>
+  );
+}
