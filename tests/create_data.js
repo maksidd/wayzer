@@ -3,6 +3,11 @@ import fetch from 'node-fetch';
 import FormData from 'form-data';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const BASE_URL = 'http://localhost:5000';
 const USERS_COUNT = 10;
@@ -125,7 +130,8 @@ function getRandomFileFromDir(dir) {
 }
 
 async function uploadTripPhotos(token, tripId, count = 3) {
-  const photoPaths = getRandomFilesFromDir('../server/uploads/photos', count);
+  const photosDir = path.resolve(__dirname, '../server/uploads/photos');
+  const photoPaths = getRandomFilesFromDir(photosDir, count);
   const form = new FormData();
   for (const p of photoPaths) {
     form.append('photos', fs.readFileSync(p), { filename: path.basename(p), contentType: 'image/jpeg' });
@@ -163,7 +169,8 @@ async function updateProfile(token, data) {
   return await makeRequest('PATCH', '/api/users/profile', data, { Authorization: `Bearer ${token}` });
 }
 async function uploadAvatar(token) {
-  const avatarPath = getRandomFileFromDir('../server/uploads/avatars');
+  const avatarsDir = path.resolve(__dirname, '../server/uploads/avatars');
+  const avatarPath = getRandomFileFromDir(avatarsDir);
   const buf = fs.readFileSync(avatarPath);
   const form = new FormData();
   form.append('avatar', buf, { filename: path.basename(avatarPath), contentType: 'image/jpeg' });
@@ -175,7 +182,8 @@ async function uploadAvatar(token) {
   return res.status;
 }
 async function uploadUserPhotos(token, count = 3) {
-  const photoPaths = getRandomFilesFromDir('../server/uploads/photos', count);
+  const photosDir = path.resolve(__dirname, '../server/uploads/photos');
+  const photoPaths = getRandomFilesFromDir(photosDir, count);
   const form = new FormData();
   for (const p of photoPaths) {
     form.append('photos', fs.readFileSync(p), { filename: path.basename(p), contentType: 'image/jpeg' });
@@ -210,7 +218,8 @@ async function createTrip(token, city, tripType, mainPhotoUrl) {
   return await makeRequest('POST', '/api/trips', data, { Authorization: `Bearer ${token}` });
 }
 async function uploadMainPhoto(token) {
-  const photoPath = getRandomFileFromDir('../server/uploads/photos');
+  const photosDir = path.resolve(__dirname, '../server/uploads/photos');
+  const photoPath = getRandomFileFromDir(photosDir);
   const buf = fs.readFileSync(photoPath);
   const form = new FormData();
   form.append('photo', buf, { filename: path.basename(photoPath), contentType: 'image/jpeg' });

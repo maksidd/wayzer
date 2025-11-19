@@ -44,6 +44,7 @@ import { eq, and, sql } from "drizzle-orm";
 import { asc } from "drizzle-orm";
 import { users as usersSchema } from "@shared/schema";
 import { tripParticipants as tripParticipantsSchema } from "@shared/schema";
+import { trips as tripsSchema } from "@shared/schema";
 
 // WebSocket client store
 const connectedClients = new Map<string, WebSocket>();
@@ -53,6 +54,7 @@ const chatParticipants = chatParticipantsSchema as any;
 const chatMessages = chatMessagesSchema as any;
 const users = usersSchema as any;
 const tripParticipants = tripParticipantsSchema as any;
+const trips = tripsSchema as any;
 
 type QueryResultLike<T> = T[] | { rows: T[] };
 const extractRows = <T>(result: QueryResultLike<T>): T[] =>
@@ -538,6 +540,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         res.json({
           message: "Photos uploaded successfully",
+          photoUrls: photoUrls,
+        });
+      } catch (error) {
+        console.error("Error uploading trip photos:", error);
+        res.status(500).json({ message: "Internal server error" });
+      }
+    },
+  );
+
+  // Upload additional photos for specific trip
+  app.post(
+    "/api/trips/:tripId/photos",
+    authenticateToken,
+    uploadPhoto.array("photos", 10),
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        if (!req.user?.userId) {
+          return res.status(401).json({ message: "User not authenticated" });
+        }
+
+        const { tripId } = req.params;
+        const userId = req.user.userId;
+
+        // Check if trip exists and user is creator
+        const trip = await storage.getTripById(tripId);
+        if (!trip) {
+          return res.status(404).json({ message: "Trip not found" });
+        }
+        if (trip.creatorId !== userId) {
+          return res.status(403).json({ message: "Only trip creator can add photos" });
+        }
+
+        if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+          return res.status(400).json({ message: "No files uploaded" });
+        }
+
+        const uploadPromises = req.files.map(async (file) => {
+          const ext = path.extname(file.originalname || "") || ".jpg";
+          const randomHash = crypto.randomBytes(16).toString("hex");
+          const filename = `${userId}_${randomHash}${ext}`;
+          const key = `photos/${filename}`;
+
+          const url = await uploadToR2({
+            key,
+            body: (file as any).buffer,
+            contentType: file.mimetype,
+          });
+
+          return { filename, url };
+        });
+
+        const uploaded = await Promise.all(uploadPromises);
+        const photoUrls = uploaded.map((u) => u.url);
+
+        // Update trip with new photos
+        const existingPhotos = trip.additionalPhotos || [];
+        const updatedPhotos = [...existingPhotos, ...photoUrls];
+
+        await db
+          .update(trips)
+          .set({
+            additionalPhotos: updatedPhotos,
+            updatedAt: sql`NOW()`,
+          })
+          .where(eq(trips.id, tripId));
+
+        res.json({
+          message: "Photos uploaded and added to trip successfully",
           photoUrls: photoUrls,
         });
       } catch (error) {
