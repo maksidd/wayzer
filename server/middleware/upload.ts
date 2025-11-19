@@ -1,61 +1,29 @@
-import multer from 'multer';
-import path from 'path';
-import crypto from 'crypto';
-import fs from 'fs';
-import sharp from 'sharp';
-
-// Ensure uploads directories exist
-const uploadsDir = path.join(process.cwd(), 'server/uploads/photos');
-const avatarsDir = path.join(process.cwd(), 'server/uploads/avatars');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-if (!fs.existsSync(avatarsDir)) {
-  fs.mkdirSync(avatarsDir, { recursive: true });
-}
-
-// Configure multer for general photo uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    // Generate filename: userId_randomHash.extension
-    const userId = (req as any).user?.userId || 'anonymous';
-    const randomHash = crypto.randomBytes(16).toString('hex');
-    const ext = path.extname(file.originalname);
-    const filename = `${userId}_${randomHash}${ext}`;
-    cb(null, filename);
-  }
-});
-
-// Configure multer for avatar uploads
-const avatarStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, avatarsDir);
-  },
-  filename: (req, file, cb) => {
-    // Generate filename: userId_randomHash.extension
-    const userId = (req as any).user?.userId || 'anonymous';
-    const randomHash = crypto.randomBytes(16).toString('hex');
-    const ext = path.extname(file.originalname);
-    const filename = `${userId}_${randomHash}${ext}`;
-    cb(null, filename);
-  }
-});
+import multer from "multer";
+import path from "path";
+import crypto from "crypto";
+import sharp from "sharp";
+import { deleteFromR2, buildR2Url } from "../r2";
 
 // File filter for images only
-const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+const fileFilter = (
+  req: any,
+  file: Express.Multer.File,
+  cb: multer.FileFilterCallback,
+) => {
+  const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
-  } else {
-    cb(new Error('Only JPEG, PNG, and WebP images are allowed'));
+    return;
   }
+
+  cb(new Error("Only JPEG, PNG, and WebP images are allowed"));
 };
 
+// In-memory storage: дальше заливаем буферы прямо в R2
+const memoryStorage = multer.memoryStorage();
+
 export const uploadPhoto = multer({
-  storage,
+  storage: memoryStorage,
   fileFilter,
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB limit
@@ -64,7 +32,7 @@ export const uploadPhoto = multer({
 });
 
 export const uploadAvatar = multer({
-  storage: avatarStorage,
+  storage: memoryStorage,
   fileFilter,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit for avatars
@@ -72,63 +40,62 @@ export const uploadAvatar = multer({
   },
 });
 
-// Create avatar thumbnail function
-export async function createAvatarThumbnail(filename: string): Promise<string> {
-  const originalPath = path.join(avatarsDir, filename);
-  const thumbnailFilename = filename.replace(/(\.[^.]+)$/, '_thumb$1');
-  const thumbnailPath = path.join(avatarsDir, thumbnailFilename);
-
+// Thumbnail для аватара — работаем с буфером
+export async function createAvatarThumbnailBuffer(
+  buffer: Buffer,
+): Promise<Buffer> {
   try {
-    await sharp(originalPath)
-      .resize(64, 64, { 
-        fit: 'cover',
-        position: 'center'
+    const thumbnailBuffer = await sharp(buffer)
+      .resize(64, 64, {
+        fit: "cover",
+        position: "center",
       })
       .jpeg({ quality: 90 })
-      .toFile(thumbnailPath);
-    
-    return thumbnailFilename;
+      .toBuffer();
+
+    return thumbnailBuffer;
   } catch (error) {
-    console.error('Error creating avatar thumbnail:', error);
-    return filename; // Return original if thumbnail creation fails
+    console.error("Error creating avatar thumbnail:", error);
+    // fallback — возвращаем оригинальный буфер, если thumbnail не удалось создать
+    return buffer;
   }
 }
 
 // Utility function to get photo URL
 export function getPhotoUrl(filename: string): string {
-  return `/uploads/photos/${filename}`;
+  const key = `photos/${filename}`;
+  return buildR2Url(key);
 }
 
 // Utility function to get avatar URL
 export function getAvatarUrl(filename: string): string {
-  return `/uploads/avatars/${filename}`;
+  const key = `avatars/${filename}`;
+  return buildR2Url(key);
 }
 
-// Utility function to delete photo file
+// Utility function to delete photo object in R2
 export function deletePhotoFile(filename: string): void {
-  try {
-    const filePath = path.join(uploadsDir, filename);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-  } catch (error) {
-    console.error('Error deleting photo file:', error);
-  }
+  const key = `photos/${filename}`;
+  deleteFromR2(key).catch((error) => {
+    console.error("Error deleting R2 photo object:", error);
+  });
 }
 
-// Utility function to delete avatar file and its thumbnail
+// Utility function to delete avatar object and its thumbnail in R2
 export function deleteAvatarFile(filename: string): void {
-  try {
-    const filePath = path.join(avatarsDir, filename);
-    const thumbnailPath = path.join(avatarsDir, filename.replace(/(\.[^.]+)$/, '_thumb$1'));
-    
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-    if (fs.existsSync(thumbnailPath)) {
-      fs.unlinkSync(thumbnailPath);
-    }
-  } catch (error) {
-    console.error('Error deleting avatar file:', error);
-  }
+  const originalKey = `avatars/${filename}`;
+  const thumbKey = `avatars/${filename.replace(/(\.[^.]+)$/, "_thumb$1")}`;
+
+  deleteFromR2(originalKey).catch((error) => {
+    console.error("Error deleting R2 avatar object:", error);
+  });
+
+  deleteFromR2(thumbKey).catch((error) => {
+    console.error("Error deleting R2 avatar thumbnail object:", error);
+  });
 }
+
+
+
+
+

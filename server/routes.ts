@@ -1,4 +1,6 @@
 import type { Express } from "express";
+import path from "path";
+import crypto from "crypto";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
@@ -15,8 +17,9 @@ import {
   getAvatarUrl,
   deletePhotoFile,
   deleteAvatarFile,
-  createAvatarThumbnail,
+  createAvatarThumbnailBuffer,
 } from "./middleware/upload";
+import { uploadToR2, extractR2KeyFromUrl } from "./r2";
 import { PasswordUtils } from "./utils/password";
 import { JWTUtils } from "./utils/jwt";
 import {
@@ -244,29 +247,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(401).json({ message: "User not authenticated" });
         }
 
-        if (!req.file) {
+        const file = req.file;
+        if (!file || !file.buffer) {
           return res.status(400).json({ message: "No file uploaded" });
         }
 
-        // Create thumbnail for avatar
-        const thumbnailFilename = await createAvatarThumbnail(
-          req.file.filename,
-        );
+        const userId = req.user.userId;
+        const ext = path.extname(file.originalname || "") || ".jpg";
+        const randomHash = crypto.randomBytes(16).toString("hex");
+        const baseFilename = `${userId}_${randomHash}${ext}`;
 
-        const avatarUrl = getAvatarUrl(req.file.filename);
-        const avatarThumbnailUrl = getAvatarUrl(thumbnailFilename);
+        const originalKey = `avatars/${baseFilename}`;
+        const thumbFilename = baseFilename.replace(/(\.[^.]+)$/, "_thumb$1");
+        const thumbKey = `avatars/${thumbFilename}`;
+
+        const thumbnailBuffer = await createAvatarThumbnailBuffer(file.buffer);
+
+        const [avatarUrl, avatarThumbnailUrl] = await Promise.all([
+          uploadToR2({
+            key: originalKey,
+            body: file.buffer,
+            contentType: file.mimetype,
+          }),
+          uploadToR2({
+            key: thumbKey,
+            body: thumbnailBuffer,
+            contentType: "image/jpeg",
+          }),
+        ]);
 
         // Get current user to delete old avatar and thumbnail if exists
-        const currentUser = await storage.getUserProfile(req.user.userId);
+        const currentUser = await storage.getUserProfile(userId);
         if (currentUser?.avatarUrl) {
-          const oldFilename = currentUser.avatarUrl.split("/").pop();
-          if (oldFilename) {
-            deleteAvatarFile(oldFilename);
+          const oldKey = extractR2KeyFromUrl(currentUser.avatarUrl);
+          if (oldKey) {
+            const oldFilename = oldKey.split("/").pop();
+            if (oldFilename) {
+              deleteAvatarFile(oldFilename);
+            }
           }
         }
 
         // Update user avatar and thumbnail
-        const updatedUser = await storage.updateUserProfile(req.user.userId, {
+        const updatedUser = await storage.updateUserProfile(userId, {
           avatarUrl: avatarUrl,
           avatarThumbnailUrl: avatarThumbnailUrl,
         });
@@ -298,8 +321,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
           return res.status(400).json({ message: "No files uploaded" });
         }
+        const userId = req.user.userId;
 
-        const photoUrls = req.files.map((file) => getPhotoUrl(file.filename));
+        const uploadPromises = req.files.map(async (file) => {
+          const ext = path.extname(file.originalname || "") || ".jpg";
+          const randomHash = crypto.randomBytes(16).toString("hex");
+          const filename = `${userId}_${randomHash}${ext}`;
+          const key = `photos/${filename}`;
+
+          const url = await uploadToR2({
+            key,
+            body: (file as any).buffer,
+            contentType: file.mimetype,
+          });
+
+          return { filename, url };
+        });
+
+        const uploaded = await Promise.all(uploadPromises);
+        const photoUrls = uploaded.map((u) => u.url);
 
         // Get current user photos and add new ones
         const currentUser = await storage.getUserProfile(req.user.userId);
@@ -433,11 +473,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(401).json({ message: "User not authenticated" });
         }
 
-        if (!req.file) {
+        const file = req.file;
+        if (!file || !file.buffer) {
           return res.status(400).json({ message: "No file uploaded" });
         }
 
-        const photoUrl = getPhotoUrl(req.file.filename);
+        const userId = req.user.userId;
+        const ext = path.extname(file.originalname || "") || ".jpg";
+        const randomHash = crypto.randomBytes(16).toString("hex");
+        const filename = `${userId}_${randomHash}${ext}`;
+        const key = `photos/${filename}`;
+
+        const photoUrl = await uploadToR2({
+          key,
+          body: file.buffer,
+          contentType: file.mimetype,
+        });
 
         res.json({
           message: "Photo uploaded successfully",
@@ -464,8 +515,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
           return res.status(400).json({ message: "No files uploaded" });
         }
+        const userId = req.user.userId;
 
-        const photoUrls = req.files.map((file) => getPhotoUrl(file.filename));
+        const uploadPromises = req.files.map(async (file) => {
+          const ext = path.extname(file.originalname || "") || ".jpg";
+          const randomHash = crypto.randomBytes(16).toString("hex");
+          const filename = `${userId}_${randomHash}${ext}`;
+          const key = `photos/${filename}`;
+
+          const url = await uploadToR2({
+            key,
+            body: (file as any).buffer,
+            contentType: file.mimetype,
+          });
+
+          return { filename, url };
+        });
+
+        const uploaded = await Promise.all(uploadPromises);
+        const photoUrls = uploaded.map((u) => u.url);
 
         res.json({
           message: "Photos uploaded successfully",
