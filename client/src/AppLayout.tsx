@@ -11,6 +11,7 @@ import Rules from "@/pages/rules";
 import Messages from "@/pages/messages";
 import Favorites from "@/pages/favorites";
 import AdminPage from "@/pages/admin";
+import TestsPage from "@/pages/tests";
 import MyRoutes from "@/pages/my-routes";
 import MyTrips from "@/pages/my-trips";
 import { Switch, Route } from "wouter";
@@ -32,6 +33,7 @@ function Router() {
       <Route path="/rules" component={Rules} />
       <Route path="/messages" component={Messages} />
       <Route path="/admin" component={AdminPage} />
+      <Route path="/tests" component={TestsPage} />
       <Route path="/my-routes" component={MyRoutes} />
       <Route path="/my-routes/:id" component={MyRoutes} />
       <Route path="/my-trips" component={MyTrips} />

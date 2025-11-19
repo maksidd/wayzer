@@ -14,6 +14,7 @@ import About from "@/pages/about";
 import Messages from "@/pages/messages";
 import Favorites from "@/pages/favorites";
 import AdminPage from "@/pages/admin";
+import TestsPage from "@/pages/tests";
 import MyRoutes from "@/pages/my-routes";
 import MyTrips from "@/pages/my-trips";
 import { Header } from "@/components/ui/header";
@@ -33,6 +34,7 @@ function Router() {
       <Route path="/about" component={About} />
       <Route path="/messages" component={Messages} />
       <Route path="/admin" component={AdminPage} />
+      <Route path="/tests" component={TestsPage} />
       <Route path="/my-routes" component={MyRoutes} />
       <Route path="/my-routes/:id" component={MyRoutes} />
       <Route path="/my-trips" component={MyTrips} />

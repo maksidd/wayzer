@@ -3,6 +3,8 @@ const { Client } = pg;
 import { config as loadEnv } from 'dotenv';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
+import bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 loadEnv({ path: resolve(__dirname, '../.env') });
@@ -39,6 +41,8 @@ loadEnv({ path: resolve(__dirname, '../.env') });
     await client.query('COMMIT');
 
     console.log(`✅ Tables truncated: ${tableNames}`);
+
+    await bootstrapAdminUser(client);
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('❌ Wipe error:', err);
@@ -46,3 +50,29 @@ loadEnv({ path: resolve(__dirname, '../.env') });
     await client.end();
   }
 })(); 
+
+async function bootstrapAdminUser(client) {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  const adminName = process.env.ADMIN_NAME || 'Admin';
+
+  if (!adminEmail || !adminPassword) {
+    console.warn('⚠️  ADMIN_EMAIL/ADMIN_PASSWORD not set; skipping admin bootstrap.');
+    return;
+  }
+
+  try {
+    const hashedPassword = await bcrypt.hash(adminPassword, 12);
+    const userId = randomUUID();
+
+    await client.query(
+      `INSERT INTO users (id, name, email, password, role, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, 'admin', NOW(), NOW());`,
+      [userId, adminName, adminEmail, hashedPassword],
+    );
+
+    console.log(`✅ Admin user created (${adminEmail})`);
+  } catch (error) {
+    console.error('❌ Failed to create admin user after wipe:', error);
+  }
+}

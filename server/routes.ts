@@ -3,6 +3,7 @@ import path from "path";
 import crypto from "crypto";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
+import { spawn } from "child_process";
 import { storage } from "./storage";
 import { ensureUsersRoleColumn } from "./db";
 import {
@@ -1517,6 +1518,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (err) {
         console.error("Admin delete user error:", err);
         res.status(500).json({ message: "Internal server error" });
+      }
+    },
+  );
+
+  // --- Test Scripts Endpoints ---
+  app.post(
+    "/api/admin/run-script",
+    authenticateToken,
+    requireAdmin,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const { scriptName } = req.body;
+        
+        if (!scriptName || !['wipe_data', 'test_api', 'create_data'].includes(scriptName)) {
+          return res.status(400).json({ message: "Invalid script name" });
+        }
+
+        const scriptPath = path.resolve(process.cwd(), `tests/${scriptName}.js`);
+        console.log(`[RUN-SCRIPT] Starting script: ${scriptPath}`);
+        
+        const output: string[] = [];
+        const errors: string[] = [];
+        let responseSent = false;
+
+        const sendResponse = (success: boolean, exitCode: number | null = null, errorMsg?: string) => {
+          if (responseSent) return;
+          responseSent = true;
+          
+          const allOutput = output.join('');
+          const allErrors = errors.join('') + (errorMsg ? '\n' + errorMsg : '');
+          
+          res.json({
+            success,
+            exitCode,
+            output: allOutput,
+            errors: allErrors,
+          });
+        };
+
+        const child = spawn('node', [scriptPath], {
+          cwd: process.cwd(),
+          env: { ...process.env },
+          stdio: ['ignore', 'pipe', 'pipe'],
+        });
+
+        child.stdout.on('data', (data) => {
+          const text = data.toString();
+          output.push(text);
+        });
+
+        child.stderr.on('data', (data) => {
+          const text = data.toString();
+          errors.push(text);
+          output.push(text);
+        });
+
+        child.on('close', (code) => {
+          console.log(`[RUN-SCRIPT] Script finished with code: ${code}`);
+          sendResponse(code === 0, code);
+        });
+
+        child.on('error', (error) => {
+          console.error(`[RUN-SCRIPT] Spawn error:`, error);
+          sendResponse(false, null, error.message);
+        });
+
+        // Timeout protection
+        setTimeout(() => {
+          if (!responseSent) {
+            console.error(`[RUN-SCRIPT] Script timeout`);
+            child.kill();
+            sendResponse(false, null, 'Script execution timeout');
+          }
+        }, 5 * 60 * 1000); // 5 minutes timeout
+      } catch (err) {
+        console.error("[RUN-SCRIPT] Error:", err);
+        if (!res.headersSent) {
+          res.status(500).json({ 
+            success: false,
+            output: '',
+            errors: err instanceof Error ? err.message : 'Internal server error'
+          });
+        }
       }
     },
   );

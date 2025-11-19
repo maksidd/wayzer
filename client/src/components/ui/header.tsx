@@ -108,6 +108,26 @@ export function Header({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48">
+                {user?.role === "admin" && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href="/admin"
+                        className="flex items-center w-full cursor-pointer"
+                      >
+                        Admin
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href="/tests"
+                        className="flex items-center w-full cursor-pointer"
+                      >
+                        Tests
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuItem asChild>
                   <Link
                     href="/trips"
@@ -130,12 +150,19 @@ export function Header({
             </DropdownMenu>
 
             <div className="hidden md:flex items-center space-x-6">
-              {user?.role === 'admin' && (
-                <Link href="/admin">
-                  <Button variant="ghost" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
-                    Admin
-                  </Button>
-                </Link>
+              {user?.role === "admin" && (
+                <>
+                  <Link href="/admin">
+                    <Button variant="ghost" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+                      Admin
+                    </Button>
+                  </Link>
+                  <Link href="/tests">
+                    <Button variant="ghost" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+                      Tests
+                    </Button>
+                  </Link>
+                </>
               )}
               <Link href="/trips" onClick={handleTripsClick}>
                 <Button
