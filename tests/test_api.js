@@ -172,53 +172,37 @@ async function runTests() {
 
   const FALLBACK_AVATAR_BASE64 =
     'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAJ0lEQVQoU2NkYGBg+M+ABYwMjIwMjCgGJQwGQqkGmA0TQwGg4kFAAAnl8L/Q8kvx8AAAAASUVORK5CYII=';
+  const getDiceBearUrl = () =>
+    `https://api.dicebear.com/7.x/adventurer/png?seed=wayzer-test-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
 
   console.log('\r\n🔵 Uploading user avatar');
   await test('Upload user avatar', async () => {
     testsTotal++;
 
-    let randomUserResponse;
-    try {
-      randomUserResponse = await fetch('https://randomuser.me/api/?gender=male&nat=us');
-      console.log(`[avatar] randomuser.me status: ${randomUserResponse.status}`);
-    } catch (networkErr) {
-      console.error('[avatar] randomuser fetch threw:', formatNetworkError(networkErr));
-    }
-
     let avatarBlob;
     let avatarFilename = 'avatar.jpg';
-    let avatarSource = 'randomuser.me';
+    let avatarSource = 'dicebear';
 
-    if (randomUserResponse?.ok) {
-      const randomUserData = await randomUserResponse.json();
-      const avatarUrl = randomUserData.results[0].picture.large;
-      console.log(`[avatar] fetched avatar URL: ${avatarUrl}`);
+    const diceBearUrl = getDiceBearUrl();
+    console.log(`[avatar] fetching dicebear avatar: ${diceBearUrl}`);
 
-      let imageResponse;
-      try {
-        imageResponse = await fetch(avatarUrl);
-      } catch (downloadErr) {
-        console.error('[avatar] avatar download threw:', formatNetworkError(downloadErr));
-        console.warn('[avatar] falling back to embedded avatar');
+    try {
+      const diceResponse = await fetch(diceBearUrl);
+      console.log(`[avatar] dicebear status: ${diceResponse.status}`);
+      if (diceResponse.ok) {
+        const imageBuffer = await diceResponse.arrayBuffer();
+        console.log(`[avatar] dicebear image size: ${imageBuffer.byteLength} bytes`);
+        avatarBlob = new Blob([imageBuffer], { type: 'image/png' });
+        avatarFilename = 'avatar-dicebear.png';
+      } else {
+        const errorText = await diceResponse.text().catch(() => '<no body>');
+        console.warn(`[avatar] dicebear fallback triggered: ${diceResponse.status} ${errorText.slice(0, 200)}`);
       }
-
-      if (imageResponse?.ok) {
-        console.log(`[avatar] avatar download status: ${imageResponse.status}`);
-        const imageBuffer = await imageResponse.arrayBuffer();
-        console.log(`[avatar] avatar image size: ${imageBuffer.byteLength} bytes`);
-        avatarBlob = new Blob([imageBuffer], { type: 'image/jpeg' });
-      } else if (imageResponse) {
-        const errorText = await imageResponse.text().catch(() => '<no body>');
-        console.warn(`[avatar] Failed to fetch avatar image (${avatarUrl}): ${imageResponse.status} ${errorText}`);
-      }
+    } catch (err) {
+      console.error('[avatar] dicebear fetch threw:', formatNetworkError(err));
     }
 
     if (!avatarBlob) {
-      if (randomUserResponse && !randomUserResponse.ok) {
-        const errorText = await randomUserResponse.text().catch(() => '<no body>');
-        console.warn(`[avatar] randomuser fallback triggered: ${randomUserResponse.status} ${errorText.slice(0, 200)}`);
-      }
-
       const fallbackBuffer = Buffer.from(FALLBACK_AVATAR_BASE64, 'base64');
       avatarBlob = new Blob([fallbackBuffer], { type: 'image/png' });
       avatarFilename = 'avatar-fallback.png';
