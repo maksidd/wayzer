@@ -14,6 +14,8 @@ const USERS_COUNT = 10;
 const TRIPS_PER_USER = 20;
 const FALLBACK_AVATAR_BASE64 =
   'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAOklEQVR4Ae3BMQEAAADCoPVPbQhPoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4G0hAAFU9FpjAAAAAElFTkSuQmCC';
+const FALLBACK_PHOTO_BASE64 =
+  'iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAH0lEQVQoU2NkYGD4z4AHGBgY/jMwMDD8B8RggAQA3YoIDQJrZQAAAABJRU5ErkJggg==';
 
 function getDiceBearUrl(seed = '') {
   const uniqueSeed = seed || `wayzer-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
@@ -38,6 +40,42 @@ async function fetchDiceBearAvatar(seed = '') {
   } catch (err) {
     console.warn('[avatar] dicebear fetch error:', err);
     return { buffer: Buffer.from(FALLBACK_AVATAR_BASE64, 'base64'), filename: `avatar-fallback-${actualSeed}.png` };
+  }
+}
+
+function createPhotoSeed(prefix = 'photo') {
+  return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e9)}`;
+}
+
+async function fetchPlaceholderPhoto({ seed = '', width = 800, height = 600 } = {}) {
+  const actualSeed = seed || createPhotoSeed();
+  const url = `https://picsum.photos/seed/${encodeURIComponent(actualSeed)}/${width}/${height}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      const body = await res.text().catch(() => '<no body>');
+      console.warn(`[photo] picsum ${actualSeed} status ${res.status}: ${body.slice(0, 120)}`);
+      return {
+        buffer: Buffer.from(FALLBACK_PHOTO_BASE64, 'base64'),
+        filename: `photo-fallback-${actualSeed}.png`,
+        contentType: 'image/png'
+      };
+    }
+    const arrayBuffer = await res.arrayBuffer();
+    const contentType = res.headers.get('content-type') || 'image/jpeg';
+    console.log(`[photo] picsum ${actualSeed} bytes: ${arrayBuffer.byteLength}`);
+    return {
+      buffer: Buffer.from(arrayBuffer),
+      filename: `photo-${actualSeed}.${contentType.includes('png') ? 'png' : 'jpg'}`,
+      contentType
+    };
+  } catch (err) {
+    console.warn('[photo] picsum fetch error:', err);
+    return {
+      buffer: Buffer.from(FALLBACK_PHOTO_BASE64, 'base64'),
+      filename: `photo-fallback-${actualSeed}.png`,
+      contentType: 'image/png'
+    };
   }
 }
 
@@ -147,22 +185,11 @@ function randomTitle() {
   return title.charAt(0).toUpperCase() + title.slice(1);
 }
 
-function getRandomFilesFromDir(dir, count) {
-  const files = fs.readdirSync(dir).filter(f => !f.startsWith('.'));
-  if (files.length === 0) throw new Error(`No files in directory ${dir}`);
-  const shuffled = files.sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, count).map(f => path.join(dir, f));
-}
-function getRandomFileFromDir(dir) {
-  return getRandomFilesFromDir(dir, 1)[0];
-}
-
 async function uploadTripPhotos(token, tripId, count = 3) {
-  const photosDir = path.resolve(__dirname, '../server/uploads/photos');
-  const photoPaths = getRandomFilesFromDir(photosDir, count);
   const form = new FormData();
-  for (const p of photoPaths) {
-    form.append('photos', fs.readFileSync(p), { filename: path.basename(p), contentType: 'image/jpeg' });
+  for (let i = 0; i < count; i++) {
+    const photo = await fetchPlaceholderPhoto({ seed: `${tripId}-trip-${i}` });
+    form.append('photos', photo.buffer, { filename: photo.filename, contentType: photo.contentType });
   }
   const res = await fetch(`${BASE_URL}/api/trips/${tripId}/photos`, {
     method: 'POST',
@@ -208,11 +235,10 @@ async function uploadAvatar(token) {
   return res.status;
 }
 async function uploadUserPhotos(token, count = 3) {
-  const photosDir = path.resolve(__dirname, '../server/uploads/photos');
-  const photoPaths = getRandomFilesFromDir(photosDir, count);
   const form = new FormData();
-  for (const p of photoPaths) {
-    form.append('photos', fs.readFileSync(p), { filename: path.basename(p), contentType: 'image/jpeg' });
+  for (let i = 0; i < count; i++) {
+    const photo = await fetchPlaceholderPhoto({ seed: `${token.slice(0, 6)}-user-${i}` });
+    form.append('photos', photo.buffer, { filename: photo.filename, contentType: photo.contentType });
   }
   const res = await fetch(`${BASE_URL}/api/users/photos`, {
     method: 'POST',
@@ -245,11 +271,9 @@ async function createTrip(token, city, tripType, mainPhotoUrl) {
   return await makeRequest('POST', '/api/trips', data, { Authorization: `Bearer ${token}` });
 }
 async function uploadMainPhoto(token) {
-  const photosDir = path.resolve(__dirname, '../server/uploads/photos');
-  const photoPath = getRandomFileFromDir(photosDir);
-  const buf = fs.readFileSync(photoPath);
+  const photo = await fetchPlaceholderPhoto({ seed: `${token.slice(0, 6)}-main`, width: 1000, height: 700 });
   const form = new FormData();
-  form.append('photo', buf, { filename: path.basename(photoPath), contentType: 'image/jpeg' });
+  form.append('photo', photo.buffer, { filename: photo.filename, contentType: photo.contentType });
   const res = await fetch(`${BASE_URL}/api/trips/upload-main-photo`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
