@@ -2,21 +2,17 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 
 import enCommon from "@/locales/en/common.json";
-import enTrips from "@/locales/en/trips.json";
 import enPages from "@/locales/en/pages.json";
 import ruCommon from "@/locales/ru/common.json";
-import ruTrips from "@/locales/ru/trips.json";
 import ruPages from "@/locales/ru/pages.json";
 
 const resources = {
   en: {
     common: enCommon,
-    trips: enTrips,
     pages: enPages,
   },
   ru: {
     common: ruCommon,
-    trips: ruTrips,
     pages: ruPages,
   },
 };
@@ -39,7 +35,7 @@ void i18n
       escapeValue: false,
     },
     defaultNS: "common",
-    ns: ["common", "trips", "pages"],
+    ns: ["common", "pages"],
     returnEmptyString: false,
   });
 

@@ -206,6 +206,39 @@
       "rejectErrorDescription": "Не удалось отклонить запрос"
     }
   },
+  "trips": {
+    "header": {
+      "title": "Поиск маршрутов",
+      "subtitle": "Просматривай доступные поездки и присоединяйся к ним"
+    },
+    "filters": {
+      "cityLabel": "Город",
+      "cityPlaceholder": "Введи город или выбери из списка",
+      "typeLabel": "Тип маршрута",
+      "typePlaceholder": "Выбери тип",
+      "allTypes": "Все типы",
+      "dateFromLabel": "Дата с",
+      "dateToLabel": "Дата по",
+      "ariaDateFrom": "Выбери дату начала",
+      "ariaDateTo": "Выбери дату окончания",
+      "clearDateFrom": "Сбросить дату с",
+      "clearDateTo": "Сбросить дату по"
+    },
+    "status": {
+      "loading": "Загружаем маршруты...",
+      "noRoutesTitle": "Маршруты не найдены",
+      "noRoutesDescription": "Попробуй изменить параметры поиска или создай маршрут",
+      "noMoreRoutes": "Маршруты закончились"
+    },
+    "buttons": {
+      "createRoute": "Создать маршрут",
+      "reset": "Сбросить"
+    },
+    "cards": {
+      "organizer": "Организатор",
+      "loadingMore": "Загружаем..."
+    }
+  },
   "tripModal": {
     "dialogDescription": "Детали маршрута",
     "notFoundTitle": "Маршрут не найден",

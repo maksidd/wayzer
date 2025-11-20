@@ -699,7 +699,7 @@ export default function Profile() {
                                 setCityInput(e.target.value);
                                 field.onChange(e.target.value);
                               }}
-                              placeholder={t("trips:filters.cityPlaceholder")}
+                              placeholder={t("pages:trips.filters.cityPlaceholder")}
                               autoComplete="off"
                               className={cityInput ? "pr-10" : undefined}
                             />

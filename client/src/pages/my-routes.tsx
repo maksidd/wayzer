@@ -27,7 +27,7 @@ const LIMIT = 12;
 export default function MyRoutes() {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
-  const { t, i18n } = useTranslation(["trips", "common", "pages"]);
+  const { t, i18n } = useTranslation(["pages", "common"]);
   const [searchCity, setSearchCity] = useState("");
   const [selectedType, setSelectedType] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<string | null>("");
@@ -45,8 +45,8 @@ export default function MyRoutes() {
   const genericAny = t("common:generic.any");
   const genericAnyDate = t("common:generic.anyDate");
   const clearCityLabel = t("common:generic.clearCity");
-  const resetLabel = t("trips:buttons.reset");
-  const loadingLabel = t("trips:status.loading");
+  const resetLabel = t("pages:trips.buttons.reset");
+  const loadingLabel = t("pages:trips.status.loading");
   const emptyTitle = t("pages:myRoutes.empty.title");
   const emptyDescription = t("pages:myRoutes.empty.description");
   const emptyCta = t("pages:myRoutes.empty.cta");
@@ -230,7 +230,7 @@ export default function MyRoutes() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {t("trips:filters.cityLabel")}
+                  {t("pages:trips.filters.cityLabel")}
                 </label>
                 <div className="relative">
                   <Input
@@ -242,7 +242,7 @@ export default function MyRoutes() {
                       setCityInput(e.target.value);
                       setSearchCity(e.target.value);
                     }}
-                    placeholder={t("trips:filters.cityPlaceholder")}
+                    placeholder={t("pages:trips.filters.cityPlaceholder")}
                     autoComplete="off"
                     className={cityInput ? "pr-10" : undefined}
                   />
@@ -286,15 +286,15 @@ export default function MyRoutes() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {t("trips:filters.typeLabel")}
+                  {t("pages:trips.filters.typeLabel")}
                 </label>
                 <Select value={selectedType} onValueChange={setSelectedType}>
                   <SelectTrigger className="border-gray-300 dark:border-gray-600">
-                    <SelectValue placeholder={t("trips:filters.typePlaceholder")} />
+                    <SelectValue placeholder={t("pages:trips.filters.typePlaceholder")} />
                   </SelectTrigger>
                   <TooltipProvider>
                     <SelectContent>
-                      <SelectItem value="all">{t("trips:filters.allTypes")}</SelectItem>
+                      <SelectItem value="all">{t("pages:trips.filters.allTypes")}</SelectItem>
                       {tripTypesLoading && (
                         <div className="px-4 py-2 text-sm text-gray-500">{t("common:generic.loading")}</div>
                       )}
@@ -325,7 +325,7 @@ export default function MyRoutes() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {t("trips:filters.dateFromLabel")}
+                  {t("pages:trips.filters.dateFromLabel")}
                 </label>
                 <Popover open={dateFromPickerOpen} onOpenChange={setDateFromPickerOpen}>
                   <PopoverTrigger asChild>
@@ -333,7 +333,7 @@ export default function MyRoutes() {
                       type="button"
                       className="w-full h-10 px-3 border border-gray-300 dark:border-gray-600 rounded-md bg-background text-sm text-gray-900 dark:text-white flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                       tabIndex={0}
-                      aria-label={t("trips:filters.ariaDateFrom")}
+                      aria-label={t("pages:trips.filters.ariaDateFrom")}
                       onClick={() => setDateFromPickerOpen(true)}
                     >
                       <span className={dateFrom ? "" : "text-black text-sm"}>
@@ -348,7 +348,7 @@ export default function MyRoutes() {
                             setDateFromPickerOpen(false);
                           }}
                           tabIndex={0}
-                          aria-label={t("trips:filters.clearDateFrom")}
+                          aria-label={t("pages:trips.filters.clearDateFrom")}
                         />
                       )}
                     </button>
@@ -372,7 +372,7 @@ export default function MyRoutes() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {t("trips:filters.dateToLabel")}
+                  {t("pages:trips.filters.dateToLabel")}
                 </label>
                 <Popover open={dateToPickerOpen} onOpenChange={setDateToPickerOpen}>
                   <PopoverTrigger asChild>
@@ -380,7 +380,7 @@ export default function MyRoutes() {
                       type="button"
                       className="w-full h-10 px-3 border border-gray-300 dark:border-gray-600 rounded-md bg-background text-sm text-gray-900 dark:text-white flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                       tabIndex={0}
-                      aria-label={t("trips:filters.ariaDateTo")}
+                      aria-label={t("pages:trips.filters.ariaDateTo")}
                       onClick={() => setDateToPickerOpen(true)}
                     >
                       <span className={dateTo ? "" : "text-black text-sm"}>
@@ -395,7 +395,7 @@ export default function MyRoutes() {
                             setDateToPickerOpen(false);
                           }}
                           tabIndex={0}
-                          aria-label={t("trips:filters.clearDateTo")}
+                          aria-label={t("pages:trips.filters.clearDateTo")}
                         />
                       )}
                     </button>
@@ -531,8 +531,8 @@ export default function MyRoutes() {
               );
             })}
             <div ref={loadMoreRef} className="h-8 col-span-full flex items-center justify-center">
-              {isFetchingNextPage && <span className="text-gray-400">{t("trips:cards.loadingMore")}</span>}
-              {!hasNextPage && trips.length > 0 && <span className="text-gray-400">{t("trips:status.noMoreRoutes")}</span>}
+              {isFetchingNextPage && <span className="text-gray-400">{t("pages:trips.cards.loadingMore")}</span>}
+              {!hasNextPage && trips.length > 0 && <span className="text-gray-400">{t("pages:trips.status.noMoreRoutes")}</span>}
             </div>
           </div>
         }

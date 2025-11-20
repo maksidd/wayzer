@@ -62,7 +62,7 @@ const LIMIT = 40;
 export default function Trips() {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
-  const { t, i18n } = useTranslation(["trips", "common"]);
+  const { t, i18n } = useTranslation(["pages", "common"]);
   const [searchCity, setSearchCity] = useState("");
   const [selectedType, setSelectedType] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<string | null>("");
@@ -80,14 +80,14 @@ export default function Trips() {
   const genericAny = t("common:generic.any");
   const genericAnyDate = t("common:generic.anyDate");
   const clearCityLabel = t("common:generic.clearCity");
-  const resetLabel = t("trips:buttons.reset");
-  const loadingTripsLabel = t("trips:status.loading");
-  const noRoutesTitle = t("trips:status.noRoutesTitle");
-  const noRoutesDescription = t("trips:status.noRoutesDescription");
-  const createRouteLabel = t("trips:buttons.createRoute");
-  const organizerLabel = t("trips:cards.organizer");
-  const loadingMoreLabel = t("trips:cards.loadingMore");
-  const noMoreRoutesLabel = t("trips:status.noMoreRoutes");
+  const resetLabel = t("pages:trips.buttons.reset");
+  const loadingTripsLabel = t("pages:trips.status.loading");
+  const noRoutesTitle = t("pages:trips.status.noRoutesTitle");
+  const noRoutesDescription = t("pages:trips.status.noRoutesDescription");
+  const createRouteLabel = t("pages:trips.buttons.createRoute");
+  const organizerLabel = t("pages:trips.cards.organizer");
+  const loadingMoreLabel = t("pages:trips.cards.loadingMore");
+  const noMoreRoutesLabel = t("pages:trips.status.noMoreRoutes");
   const toastLogoutTitle = t("common:generic.toastLogoutTitle");
   const toastLogoutDescription = t("common:generic.toastLogoutDescription");
 
@@ -247,17 +247,17 @@ export default function Trips() {
           <CardHeader>
             <CardTitle className="flex items-center text-gray-900 dark:text-white">
               <Search className="h-5 w-5 mr-2" />
-              {t("trips:header.title")}
+              {t("pages:trips.header.title")}
             </CardTitle>
             <p className="text-gray-600 dark:text-gray-400">
-              {t("trips:header.subtitle")}
+              {t("pages:trips.header.subtitle")}
             </p>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {t("trips:filters.cityLabel")}
+                  {t("pages:trips.filters.cityLabel")}
                 </label>
                 <div className="relative">
                   <Input
@@ -269,7 +269,7 @@ export default function Trips() {
                       setCityInput(e.target.value);
                       setSearchCity(e.target.value);
                     }}
-                    placeholder={t("trips:filters.cityPlaceholder")}
+                    placeholder={t("pages:trips.filters.cityPlaceholder")}
                     autoComplete="off"
                     className={cityInput ? "pr-10" : undefined}
                   />
@@ -313,15 +313,15 @@ export default function Trips() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {t("trips:filters.typeLabel")}
+                  {t("pages:trips.filters.typeLabel")}
                 </label>
                 <Select value={selectedType} onValueChange={setSelectedType}>
                   <SelectTrigger className="border-gray-300 dark:border-gray-600">
-                    <SelectValue placeholder={t("trips:filters.typePlaceholder")} />
+                    <SelectValue placeholder={t("pages:trips.filters.typePlaceholder")} />
                   </SelectTrigger>
                   <TooltipProvider>
                     <SelectContent>
-                      <SelectItem value="all">{t("trips:filters.allTypes")}</SelectItem>
+                      <SelectItem value="all">{t("pages:trips.filters.allTypes")}</SelectItem>
                       {tripTypesLoading && (
                         <div className="px-4 py-2 text-sm text-gray-500">{t("common:generic.loading")}</div>
                       )}
@@ -352,7 +352,7 @@ export default function Trips() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {t("trips:filters.dateFromLabel")}
+                  {t("pages:trips.filters.dateFromLabel")}
                 </label>
                 <Popover open={dateFromPickerOpen} onOpenChange={setDateFromPickerOpen}>
                   <PopoverTrigger asChild>
@@ -360,7 +360,7 @@ export default function Trips() {
                       type="button"
                       className="w-full h-10 px-3 border border-gray-300 dark:border-gray-600 rounded-md bg-background text-sm text-gray-900 dark:text-white flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                       tabIndex={0}
-                      aria-label={t("trips:filters.ariaDateFrom")}
+                      aria-label={t("pages:trips.filters.ariaDateFrom")}
                       onClick={() => setDateFromPickerOpen(true)}
                     >
                       <span className={dateFrom ? "" : "text-black text-sm"}>
@@ -375,7 +375,7 @@ export default function Trips() {
                             setDateFromPickerOpen(false);
                           }}
                           tabIndex={0}
-                          aria-label={t("trips:filters.clearDateFrom")}
+                          aria-label={t("pages:trips.filters.clearDateFrom")}
                         />
                       )}
                     </button>
@@ -399,7 +399,7 @@ export default function Trips() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {t("trips:filters.dateToLabel")}
+                  {t("pages:trips.filters.dateToLabel")}
                 </label>
                 <Popover open={dateToPickerOpen} onOpenChange={setDateToPickerOpen}>
                   <PopoverTrigger asChild>
@@ -407,7 +407,7 @@ export default function Trips() {
                       type="button"
                       className="w-full h-10 px-3 border border-gray-300 dark:border-gray-600 rounded-md bg-background text-sm text-gray-900 dark:text-white flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                       tabIndex={0}
-                      aria-label={t("trips:filters.ariaDateTo")}
+                      aria-label={t("pages:trips.filters.ariaDateTo")}
                       onClick={() => setDateToPickerOpen(true)}
                     >
                       <span className={dateTo ? "" : "text-black text-sm"}>
@@ -422,7 +422,7 @@ export default function Trips() {
                             setDateToPickerOpen(false);
                           }}
                           tabIndex={0}
-                          aria-label={t("trips:filters.clearDateTo")}
+                          aria-label={t("pages:trips.filters.clearDateTo")}
                         />
                       )}
                     </button>
