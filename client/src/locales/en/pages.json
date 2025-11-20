@@ -238,32 +238,32 @@
     },
     "routeTypes": {
       "car": {
-        "name": "Car trip",
-        "description": "Road adventures by car or car sharing"
+        "name": "Car",
+        "description": "A car ride that is fast, comfortable, and lets you reach remote spots. Ideal for long routes and road trips."
       },
       "plane": {
         "name": "Flight",
         "description": "Trips that start with a flight"
       },
       "bike": {
-        "name": "Bike ride",
-        "description": "Cycling routes and bikepacking"
+        "name": "Bicycle",
+        "description": "A bike ride that mixes active rest, sport, and exploring new routes."
       },
       "walk": {
-        "name": "Walking tour",
-        "description": "City walks, hikes and urban explorations"
+        "name": "Walk",
+        "description": "A relaxed walk through the city, park, or nature. Perfect for conversation and enjoying the atmosphere."
       },
       "scooter": {
-        "name": "Scooter ride",
-        "description": "Routes for electric or classic scooters"
+        "name": "Scooter",
+        "description": "A scooter trip that is handy in the city and on short distances. Light, mobile, and a bit of drive."
       },
       "monowheel": {
-        "name": "Monowheel ride",
-        "description": "Trips on personal electric transport"
+        "name": "Unicycle",
+        "description": "A unicycle is a modern way to move for people who love technology and unusual sensations."
       },
       "motorcycle": {
-        "name": "Motorcycle trip",
-        "description": "Weekend rides and long moto tours"
+        "name": "Motorcycle",
+        "description": "A motorcycle journey for those who love speed, freedom, and wind. Great for dynamic rides and fresh impressions."
       },
       "public_transport": {
         "name": "Public transport",
@@ -278,12 +278,12 @@
         "description": "Water journeys by boat, yacht or SUP"
       },
       "sea": {
-        "name": "Sea trip",
-        "description": "Everything related to the sea or ocean"
+        "name": "Sea",
+        "description": "A journey to the sea or on the water with relaxation, fresh air, and marine adventures."
       },
       "mountains": {
-        "name": "Mountain adventure",
-        "description": "Hikes, trekking and climbing in mountains"
+        "name": "Mountains",
+        "description": "A trip to the mountains for fans of nature, fresh air, and breathtaking views."
       },
       "sights": {
         "name": "Sightseeing",
@@ -291,31 +291,31 @@
       },
       "fest": {
         "name": "Festival",
-        "description": "Concerts, festivals and large events"
+        "description": "A festival, mass event, or concert with lots of people, emotions, and new acquaintances."
       },
       "picnic": {
         "name": "Picnic",
-        "description": "Outdoor chill with snacks and friends"
+        "description": "A picnic outdoors with food, rest, and pleasant company in the fresh air."
       },
       "camping": {
         "name": "Camping",
-        "description": "Weekend camping, glamping or bivouac"
+        "description": "Camping means tents, campfires, and the real atmosphere of adventure."
       },
       "party": {
         "name": "Party",
-        "description": "House parties or themed gatherings"
+        "description": "A party full of music, dancing, and lively conversations with friends."
       },
       "retreat": {
         "name": "Retreat",
-        "description": "Yoga, wellness or mindfulness trips"
+        "description": "A retreat is rest for mind and body, meditation, yoga, and a reset."
       },
       "pets": {
         "name": "Pet-friendly",
-        "description": "Trips where pets are welcome"
+        "description": "A trip with pets or for animal lovers. A great way to spend time with four-legged friends."
       },
       "other": {
-        "name": "Other format",
-        "description": "Anything that doesn't fit the rest"
+        "name": "Other",
+        "description": "Anything that doesn't fit the rest."
       }
     },
     "status": {
