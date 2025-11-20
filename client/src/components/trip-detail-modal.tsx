@@ -107,16 +107,6 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
     enabled: !!tripId && isOpen,
   });
 
-  const { data: comments = [] } = useQuery({
-    queryKey: ["/api/trips", tripId, "comments"],
-    queryFn: async () => {
-      const response = await fetch(`/api/trips/${tripId}/comments`);
-      if (!response.ok) throw new Error("Failed to load comments");
-      return response.json();
-    },
-    enabled: !!tripId && isOpen,
-  });
-
   // Check user status in trip
   const { data: tripStatus } = useQuery({
     queryKey: ["/api/trips", tripId, "status"],
@@ -303,9 +293,9 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogDescription className="sr-only">Trip details</DialogDescription>
         <DialogHeader>
           <DialogTitle>{trip.title}</DialogTitle>
-          <DialogDescription className="sr-only">Route details, photos, participants and chat</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
