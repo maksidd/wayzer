@@ -1,6 +1,7 @@
 import { spawn } from 'child_process';
 import http from 'http';
 import WebSocket from 'ws';
+import util from 'util';
 
 // Comprehensive test runner for all API endpoints
 async function runTests() {
@@ -148,11 +149,38 @@ async function runTests() {
     }
   });
 
+  const formatNetworkError = (error) => {
+    if (!error || typeof error !== 'object') return String(error);
+    const data = {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+      errno: error.errno,
+      type: error.type,
+      syscall: error.syscall,
+      hostname: error.hostname,
+      cause: error.cause ? {
+        name: error.cause.name,
+        message: error.cause.message,
+        code: error.cause.code,
+      } : undefined,
+    };
+    return util.inspect(data, { depth: 3, breakLength: 120 });
+  };
+
   console.log('\r\n🔵 Uploading user avatar');
   await test('Upload user avatar', async () => {
     testsTotal++;
 
-    const randomUserResponse = await fetch('https://randomuser.me/api/?gender=male&nat=us');
+    let randomUserResponse;
+    try {
+      randomUserResponse = await fetch('https://randomuser.me/api/?gender=male&nat=us');
+    } catch (networkErr) {
+      console.error('[avatar] randomuser fetch threw:', formatNetworkError(networkErr));
+      throw new Error(`Failed to fetch random user data (network error: ${networkErr.message})`);
+    }
+
     console.log(`[avatar] randomuser.me status: ${randomUserResponse.status}`);
     if (!randomUserResponse.ok) {
       const errorText = await randomUserResponse.text().catch(() => '<no body>');
@@ -163,7 +191,14 @@ async function runTests() {
     const avatarUrl = randomUserData.results[0].picture.large;
     console.log(`[avatar] fetched avatar URL: ${avatarUrl}`);
 
-    const imageResponse = await fetch(avatarUrl);
+    let imageResponse;
+    try {
+      imageResponse = await fetch(avatarUrl);
+    } catch (downloadErr) {
+      console.error('[avatar] avatar download threw:', formatNetworkError(downloadErr));
+      throw new Error(`Failed to fetch avatar image (network error: ${downloadErr.message})`);
+    }
+
     console.log(`[avatar] avatar download status: ${imageResponse.status}`);
     if (!imageResponse.ok) {
       const errorText = await imageResponse.text().catch(() => '<no body>');
