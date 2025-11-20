@@ -12,6 +12,34 @@ const __dirname = dirname(__filename);
 const BASE_URL = 'http://localhost:5000';
 const USERS_COUNT = 10;
 const TRIPS_PER_USER = 20;
+const FALLBACK_AVATAR_BASE64 =
+  'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAOklEQVR4Ae3BMQEAAADCoPVPbQhPoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4G0hAAFU9FpjAAAAAElFTkSuQmCC';
+
+function getDiceBearUrl(seed = '') {
+  const uniqueSeed = seed || `wayzer-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+  return {
+    url: `https://api.dicebear.com/7.x/adventurer/png?size=256&seed=${encodeURIComponent(uniqueSeed)}`,
+    seed: uniqueSeed,
+  };
+}
+
+async function fetchDiceBearAvatar(seed = '') {
+  const { url, seed: actualSeed } = getDiceBearUrl(seed);
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      const body = await res.text().catch(() => '<no body>');
+      console.warn(`[avatar] dicebear ${actualSeed} status ${res.status}: ${body.slice(0, 120)}`);
+      return { buffer: Buffer.from(FALLBACK_AVATAR_BASE64, 'base64'), filename: `avatar-fallback-${actualSeed}.png` };
+    }
+    const arrayBuffer = await res.arrayBuffer();
+    console.log(`[avatar] dicebear ${actualSeed} bytes: ${arrayBuffer.byteLength}`);
+    return { buffer: Buffer.from(arrayBuffer), filename: `avatar-dicebear-${actualSeed}.png` };
+  } catch (err) {
+    console.warn('[avatar] dicebear fetch error:', err);
+    return { buffer: Buffer.from(FALLBACK_AVATAR_BASE64, 'base64'), filename: `avatar-fallback-${actualSeed}.png` };
+  }
+}
 
   let testsPassed = 0;
   let testsTotal = 0;
@@ -169,11 +197,9 @@ async function updateProfile(token, data) {
   return await makeRequest('PATCH', '/api/users/profile', data, { Authorization: `Bearer ${token}` });
 }
 async function uploadAvatar(token) {
-  const avatarsDir = path.resolve(__dirname, '../server/uploads/avatars');
-  const avatarPath = getRandomFileFromDir(avatarsDir);
-  const buf = fs.readFileSync(avatarPath);
+  const { buffer, filename } = await fetchDiceBearAvatar();
   const form = new FormData();
-  form.append('avatar', buf, { filename: path.basename(avatarPath), contentType: 'image/jpeg' });
+  form.append('avatar', buffer, { filename, contentType: 'image/png' });
   const res = await fetch(`${BASE_URL}/api/users/avatar`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
