@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapPin, Users, User } from "lucide-react";
 import { FavoriteButton } from "@/components/favorite-button";
 import { format } from "date-fns";
-import { ru } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import React from "react";
 
 export const TripCard = ({
@@ -77,7 +77,7 @@ export const TripCard = ({
         )}
       </div>
       <div className="flex items-center justify-between text-sm text-gray-500 mt-auto">
-        <span>{trip.date ? format(new Date(trip.date), "d MMMM yyyy", { locale: ru }) : "Any date"}</span>
+        <span>{trip.date ? format(new Date(trip.date), "d MMMM yyyy", { locale: enUS }) : "Any date"}</span>
         <span>
           <Users className="h-4 w-4 inline" /> {trip.participantsCount || 0}/{trip.maxParticipants}
         </span>

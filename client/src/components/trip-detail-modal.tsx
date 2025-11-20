@@ -267,7 +267,7 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
   const canJoin = user && !isParticipant && !isCreator && participants.length < trip.maxParticipants;
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("ru-RU", {
+    return new Date(dateString).toLocaleDateString("en-US", {
       day: "numeric",
       month: "long",
       year: "numeric",

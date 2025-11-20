@@ -24,7 +24,7 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/comp
 import { useRef } from "react";
 import React from "react";
 import { format } from "date-fns";
-import { ru } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 
@@ -549,7 +549,7 @@ export default function CreateTrip() {
                               onClick={() => setDatePickerOpen(true)}
                             >
                               <span className={date ? "" : "text-black text-sm"}>
-                                {date ? format(new Date(date), "d MMMM yyyy", { locale: ru }) : "Any"}
+                                {date ? format(new Date(date), "d MMMM yyyy", { locale: enUS }) : "Any"}
                               </span>
                               {date && (
                                 <X
@@ -578,7 +578,7 @@ export default function CreateTrip() {
                                   setDatePickerOpen(false);
                                 }
                               }}
-                              locale={ru}
+                              locale={enUS}
                               className="!gap-1 [&_.rdp-day]:h-6 [&_.rdp-day]:w-6 [&_.rdp-day]:text-xs"
                             />
                           </PopoverContent>

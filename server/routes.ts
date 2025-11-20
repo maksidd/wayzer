@@ -1561,6 +1561,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   );
 
   // --- Admin Endpoints ---
+  app.use("/api/admin", (_req, res, next) => {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+    next();
+  });
   app.get(
     "/api/admin/users",
     authenticateToken,

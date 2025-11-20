@@ -31,10 +31,15 @@ export default function AdminPage() {
   }, [me]);
 
   // fetch users list
-  const { data: users = [], refetch } = useQuery({
+  const { data: users = [] } = useQuery({
     queryKey: ['/api/admin/users'],
-    queryFn: () => apiRequest('/api/admin/users').then(r => r.json()),
+    queryFn: () => apiRequest('/api/admin/users', { cache: 'no-store' }).then(r => r.json()),
     enabled: me?.role === 'admin',
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnReconnect: 'always',
+    refetchOnWindowFocus: 'always',
+    refetchOnMount: 'always',
   });
 
   const deleteMutation = useMutation({

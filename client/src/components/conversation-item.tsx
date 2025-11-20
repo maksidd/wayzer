@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { ru } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 
 interface ConversationItemProps {
   conversation: any;
@@ -35,7 +35,7 @@ export function ConversationItem({ conversation, isSelected, onClick }: Conversa
           <p className="font-medium flex-1 min-w-0 w-0 truncate">{name}</p>
           {lastMessage && (
             <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
-              {format(new Date(lastMessage.createdAt), 'HH:mm', { locale: ru })}
+              {format(new Date(lastMessage.createdAt), 'HH:mm', { locale: enUS })}
             </span>
           )}
         </div>

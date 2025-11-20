@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Phone, Mail, MessageCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { ru } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import React from "react";
 
 interface UserProfileModalProps {
@@ -124,7 +124,7 @@ export function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalPr
                 </div>
               )}
               {user.createdAt && (
-                <p className="text-xs text-gray-500">On service since {format(new Date(user.createdAt), "d MMMM yyyy", { locale: ru })}</p>
+                <p className="text-xs text-gray-500">On service since {format(new Date(user.createdAt), "d MMMM yyyy", { locale: enUS })}</p>
               )}
             </div>
           </div>

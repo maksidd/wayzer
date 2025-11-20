@@ -18,7 +18,7 @@ import type { TripType } from "@shared/schema";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { ru } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { UserProfileModal } from "@/components/user-profile-modal";
 
 export default function MyTrips() {
@@ -111,7 +111,7 @@ export default function MyTrips() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("ru-RU", {
+    return new Date(dateString).toLocaleDateString("en-US", {
       day: "numeric",
       month: "long",
       year: "numeric",
@@ -272,7 +272,7 @@ export default function MyTrips() {
                       onClick={() => setDateFromPickerOpen(true)}
                     >
                       <span className={dateFrom ? "" : "text-black text-sm"}>
-                        {dateFrom ? format(new Date(dateFrom), "d MMMM yyyy", { locale: ru }) : "Any"}
+                        {dateFrom ? format(new Date(dateFrom), "d MMMM yyyy", { locale: enUS }) : "Any"}
                       </span>
                       {dateFrom && (
                         <X
@@ -299,7 +299,7 @@ export default function MyTrips() {
                           setDateFromPickerOpen(false);
                         }
                       }}
-                      locale={ru}
+                      locale={enUS}
                       className="!gap-1 [&_.rdp-day]:h-6 [&_.rdp-day]:w-6 [&_.rdp-day]:text-xs"
                     />
                   </PopoverContent>
@@ -319,7 +319,7 @@ export default function MyTrips() {
                       onClick={() => setDateToPickerOpen(true)}
                     >
                       <span className={dateTo ? "" : "text-black text-sm"}>
-                        {dateTo ? format(new Date(dateTo), "d MMMM yyyy", { locale: ru }) : "Any"}
+                        {dateTo ? format(new Date(dateTo), "d MMMM yyyy", { locale: enUS }) : "Any"}
                       </span>
                       {dateTo && (
                         <X
@@ -346,7 +346,7 @@ export default function MyTrips() {
                           setDateToPickerOpen(false);
                         }
                       }}
-                      locale={ru}
+                      locale={enUS}
                       className="!gap-1 [&_.rdp-day]:h-6 [&_.rdp-day]:w-6 [&_.rdp-day]:text-xs"
                     />
                   </PopoverContent>
@@ -463,7 +463,7 @@ export default function MyTrips() {
                       )}
                     </div>
                     <div className="flex items-center justify-between text-sm text-gray-500 mt-auto">
-                      <span>{trip.date ? format(new Date(trip.date), "d MMMM yyyy", { locale: ru }) : "Any date"}</span>
+                      <span>{trip.date ? format(new Date(trip.date), "d MMMM yyyy", { locale: enUS }) : "Any date"}</span>
                       <span>
                         <Users className="h-4 w-4 inline" /> {trip.participantsCount || 0}/{trip.maxParticipants}
                       </span>

@@ -20,12 +20,12 @@ loadEnv({ path: resolve(__dirname, '../.env') });
   await client.connect();
 
   try {
-    // Get list of all tables in public schema except trip_types
+    // Get list of all tables in public schema except trip_types/cities/users
     const { rows } = await client.query(
       `SELECT tablename
          FROM pg_tables
         WHERE schemaname = 'public'
-          AND tablename NOT IN ('trip_types', 'cities');`
+          AND tablename NOT IN ('trip_types', 'cities', 'users');`
     );
 
     if (rows.length === 0) {
@@ -42,6 +42,7 @@ loadEnv({ path: resolve(__dirname, '../.env') });
 
     console.log(`✅ Tables truncated: ${tableNames}`);
 
+    await preserveAdminUser(client);
     await bootstrapAdminUser(client);
   } catch (err) {
     await client.query('ROLLBACK');
@@ -62,6 +63,16 @@ async function bootstrapAdminUser(client) {
   }
 
   try {
+    const { rowCount } = await client.query(
+      `SELECT 1 FROM users WHERE email = $1 LIMIT 1;`,
+      [adminEmail],
+    );
+
+    if (rowCount > 0) {
+      console.log(`ℹ️  Admin user already present (${adminEmail})`);
+      return;
+    }
+
     const hashedPassword = await bcrypt.hash(adminPassword, 12);
     const userId = randomUUID();
 
@@ -75,4 +86,23 @@ async function bootstrapAdminUser(client) {
   } catch (error) {
     console.error('❌ Failed to create admin user after wipe:', error);
   }
+}
+
+async function preserveAdminUser(client) {
+  const adminEmail = process.env.ADMIN_EMAIL;
+
+  if (!adminEmail) {
+    console.warn(
+      '⚠️  ADMIN_EMAIL not set; users table will be truncated along with others.',
+    );
+    await client.query('TRUNCATE TABLE users CASCADE;');
+    return;
+  }
+
+  await client.query(
+    `DELETE FROM users WHERE email <> $1 OR email IS NULL;`,
+    [adminEmail],
+  );
+
+  console.log(`✅ Preserved admin user (${adminEmail})`);
 }

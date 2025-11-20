@@ -12,7 +12,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import type { ChatConversation, MessageWithUsers } from "@shared/schema";
 import { format } from "date-fns";
-import { ru } from "date-fns/locale";
 import { TripCard } from "@/components/trip-card";
 import { MapPin, Users, User, Circle, Car, Plane, Bike, PersonStanding, Ship, Mountain, Landmark, Wind, Utensils, TreePine, PartyPopper, Flower2, Squirrel } from "lucide-react";
 import React from "react";
