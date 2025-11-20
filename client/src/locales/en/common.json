@@ -1,0 +1,25 @@
+{
+  "language": {
+    "english": "English",
+    "russian": "Russian",
+    "change": "Change language"
+  },
+  "generic": {
+    "any": "Any",
+    "anyDate": "Any date",
+    "reset": "Reset",
+    "loading": "Loading...",
+    "loadingTrips": "Loading trips...",
+    "noRoutes": "No routes found",
+    "noRoutesDescription": "Try changing search parameters or create your own route",
+    "createRoute": "Create route",
+    "organizer": "Organizer",
+    "clearCity": "Clear city",
+    "loadingError": "Loading error",
+    "loadingState": "Loading...",
+    "noMoreRoutes": "No more routes",
+    "toastLogoutTitle": "Logged out",
+    "toastLogoutDescription": "Goodbye!"
+  }
+}
+

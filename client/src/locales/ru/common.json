@@ -1,0 +1,25 @@
+{
+  "language": {
+    "english": "Английский",
+    "russian": "Русский",
+    "change": "Сменить язык"
+  },
+  "generic": {
+    "any": "Любая",
+    "anyDate": "Любая дата",
+    "reset": "Сбросить",
+    "loading": "Загрузка...",
+    "loadingTrips": "Загружаем маршруты...",
+    "noRoutes": "Маршруты не найдены",
+    "noRoutesDescription": "Попробуй изменить параметры поиска или создай маршрут",
+    "createRoute": "Создать маршрут",
+    "organizer": "Организатор",
+    "clearCity": "Очистить город",
+    "loadingError": "Ошибка загрузки",
+    "loadingState": "Загрузка...",
+    "noMoreRoutes": "Маршруты закончились",
+    "toastLogoutTitle": "Выход выполнен",
+    "toastLogoutDescription": "До встречи!"
+  }
+}
+
