@@ -168,6 +168,43 @@
       "invalidDate": "Неверный формат даты",
       "datePast": "Дата поездки должна быть в будущем"
     }
+  },
+  "messages": {
+    "title": "Чаты",
+    "loadingShell": "Загружаем...",
+    "loginRequired": "Нужно войти в аккаунт",
+    "sections": {
+      "new": "Новые запросы",
+      "group": "Групповые чаты",
+      "private": "Личные чаты",
+      "archived": "Архив"
+    },
+    "emptyList": "Сообщений пока нет",
+    "loading": "Загружаем сообщения...",
+    "emptyConversation": "Начни разговор!",
+    "selectChat": "Выбери чат",
+    "profileUnavailableTitle": "Профиль недоступен",
+    "profileUnavailableDescription": "Не удалось определить пользователя этого чата.",
+    "systemName": "Система",
+    "inputPlaceholder": "Напиши сообщение...",
+    "profile": {
+      "open": "Открыть профиль",
+      "openWithName": "Открыть профиль {{name}}"
+    },
+    "relative": {
+      "yesterday": "вчера",
+      "twoDays": "2 дня назад"
+    },
+    "toasts": {
+      "sendErrorTitle": "Ошибка",
+      "sendErrorDescription": "Не удалось отправить сообщение",
+      "acceptSuccessTitle": "Готово",
+      "acceptSuccessDescription": "Запрос принят",
+      "acceptErrorDescription": "Не удалось принять запрос",
+      "rejectSuccessTitle": "Готово",
+      "rejectSuccessDescription": "Запрос отклонён",
+      "rejectErrorDescription": "Не удалось отклонить запрос"
+    }
   }
 }
 

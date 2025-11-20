@@ -168,6 +168,43 @@
       "invalidDate": "Invalid date format",
       "datePast": "Trip date must be in the future"
     }
+  },
+  "messages": {
+    "title": "Chats",
+    "loadingShell": "Loading...",
+    "loginRequired": "You must be logged in",
+    "sections": {
+      "new": "New requests",
+      "group": "Group chats",
+      "private": "Private chats",
+      "archived": "Archived chats"
+    },
+    "emptyList": "You have no messages yet",
+    "loading": "Loading messages...",
+    "emptyConversation": "Start a conversation!",
+    "selectChat": "Select a chat",
+    "profileUnavailableTitle": "Profile unavailable",
+    "profileUnavailableDescription": "Could not determine user for this chat.",
+    "systemName": "System",
+    "inputPlaceholder": "Enter message...",
+    "profile": {
+      "open": "Open profile",
+      "openWithName": "Open profile {{name}}"
+    },
+    "relative": {
+      "yesterday": "yesterday",
+      "twoDays": "2 days ago"
+    },
+    "toasts": {
+      "sendErrorTitle": "Error",
+      "sendErrorDescription": "Failed to send message",
+      "acceptSuccessTitle": "Success",
+      "acceptSuccessDescription": "Request accepted",
+      "acceptErrorDescription": "Failed to accept request",
+      "rejectSuccessTitle": "Success",
+      "rejectSuccessDescription": "Request rejected",
+      "rejectErrorDescription": "Failed to reject request"
+    }
   }
 }
 

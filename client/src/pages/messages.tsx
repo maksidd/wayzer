@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueries } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,29 +11,11 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import type { ChatConversation, MessageWithUsers } from "@shared/schema";
-import { format } from "date-fns";
 import { TripCard } from "@/components/trip-card";
 import { MapPin, Users, User, Circle, Car, Plane, Bike, PersonStanding, Ship, Mountain, Landmark, Wind, Utensils, TreePine, PartyPopper, Flower2, Squirrel } from "lucide-react";
 import React from "react";
-
-function formatSmartDate(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const msgDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const diffDays = Math.floor((today.getTime() - msgDay.getTime()) / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) {
-    // Today
-    return format(date, 'HH:mm');
-  } else if (diffDays === 1) {
-    return `yesterday, ${format(date, 'HH:mm')}`;
-  } else if (diffDays === 2) {
-    return `2 days ago, ${format(date, 'HH:mm')}`;
-  } else {
-    return format(date, 'dd.MM.yyyy HH:mm');
-  }
-}
+import { enUS, ru as ruLocale } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 import { TripDetailModal } from "@/components/trip-detail-modal";
 import { ConversationItem } from "@/components/conversation-item";
 import { UserProfileModal } from "@/components/user-profile-modal";
@@ -85,6 +67,42 @@ export default function Messages() {
   const [profileUserId, setProfileUserId] = useState<string | null>(null);
   // To store chat id where new message arrived
   const [incomingChatId, setIncomingChatId] = useState<string | null>(null);
+  const { t, i18n } = useTranslation(["pages", "common"]);
+  const resolvedLanguage = i18n.resolvedLanguage ?? i18n.language ?? "en";
+  const dateFnsLocale = resolvedLanguage.startsWith("ru") ? ruLocale : enUS;
+  const intlLocale = resolvedLanguage.startsWith("ru") ? "ru-RU" : "en-US";
+  const sectionLabels = useMemo(() => ({
+    new: t("pages:messages.sections.new"),
+    group: t("pages:messages.sections.group"),
+    private: t("pages:messages.sections.private"),
+    archived: t("pages:messages.sections.archived"),
+  }), [t]);
+  const systemName = t("pages:messages.systemName");
+  const getProfileAriaLabel = useCallback(
+    (name?: string | null) =>
+      name ? t("pages:messages.profile.openWithName", { name }) : t("pages:messages.profile.open"),
+    [t]
+  );
+  const formatSmartDate = useCallback((dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const msgDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const diffDays = Math.floor((today.getTime() - msgDay.getTime()) / (1000 * 60 * 60 * 24));
+    const timeFormatter = new Intl.DateTimeFormat(intlLocale, { hour: "2-digit", minute: "2-digit" });
+
+    if (diffDays === 0) {
+      return timeFormatter.format(date);
+    }
+    if (diffDays === 1) {
+      return `${t("pages:messages.relative.yesterday")}, ${timeFormatter.format(date)}`;
+    }
+    if (diffDays === 2) {
+      return `${t("pages:messages.relative.twoDays")}, ${timeFormatter.format(date)}`;
+    }
+    const dateTimeFormatter = new Intl.DateTimeFormat(intlLocale, { dateStyle: "short", timeStyle: "short" });
+    return dateTimeFormatter.format(date);
+  }, [intlLocale, t]);
 
   // Get current user data
   const { data: user, isLoading: userLoading, error: userError } = useQuery<any>({
@@ -316,8 +334,8 @@ export default function Messages() {
       }
       
       toast({
-        title: "Error",
-        description: "Failed to send message",
+        title: t("pages:messages.toasts.sendErrorTitle"),
+        description: t("pages:messages.toasts.sendErrorDescription"),
         variant: "destructive",
       });
     },
@@ -352,8 +370,8 @@ export default function Messages() {
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Request accepted",
+        title: t("pages:messages.toasts.acceptSuccessTitle"),
+        description: t("pages:messages.toasts.acceptSuccessDescription"),
       });
       // Update messages in current chat
       queryClient.invalidateQueries({ queryKey: [`/api/messages2/${selectedChatId}`] });
@@ -362,8 +380,8 @@ export default function Messages() {
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to accept request",
+        title: t("pages:messages.toasts.sendErrorTitle"),
+        description: t("pages:messages.toasts.acceptErrorDescription"),
         variant: "destructive",
       });
     },
@@ -377,8 +395,8 @@ export default function Messages() {
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Request rejected",
+        title: t("pages:messages.toasts.rejectSuccessTitle"),
+        description: t("pages:messages.toasts.rejectSuccessDescription"),
       });
       // Update messages in current chat
       queryClient.invalidateQueries({ queryKey: [`/api/messages2/${selectedChatId}`] });
@@ -387,8 +405,8 @@ export default function Messages() {
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to reject request",
+        title: t("pages:messages.toasts.sendErrorTitle"),
+        description: t("pages:messages.toasts.rejectErrorDescription"),
         variant: "destructive",
       });
     },
@@ -408,9 +426,9 @@ export default function Messages() {
       queryClient.invalidateQueries({ queryKey: [`/api/messages2/${selectedChatId}`] });
       // Update participant status
       queryClient.invalidateQueries({ queryKey: ["/api/trips/", tripId, "status", userId] });
-      toast({ title: 'Request accepted', description: 'User added to participants' });
+      toast({ title: t("pages:messages.toasts.acceptSuccessTitle"), description: t("pages:messages.toasts.acceptSuccessDescription") });
     } catch (err: any) {
-      toast({ variant: 'destructive', title: 'Error', description: err.message || 'Failed to accept request' });
+      toast({ variant: 'destructive', title: t("pages:messages.toasts.sendErrorTitle"), description: err.message || t("pages:messages.toasts.acceptErrorDescription") });
     }
   };
   const handleRejectRequest = async (tripId: string, userId: string) => {
@@ -420,9 +438,9 @@ export default function Messages() {
       queryClient.invalidateQueries({ queryKey: [`/api/messages2/${selectedChatId}`] });
       // Update participant status
       queryClient.invalidateQueries({ queryKey: ["/api/trips/", tripId, "status", userId] });
-      toast({ title: 'Request rejected' });
+      toast({ title: t("pages:messages.toasts.rejectSuccessTitle"), description: t("pages:messages.toasts.rejectSuccessDescription") });
     } catch (err: any) {
-      toast({ variant: 'destructive', title: 'Error', description: err.message || 'Failed to reject request' });
+      toast({ variant: 'destructive', title: t("pages:messages.toasts.sendErrorTitle"), description: err.message || t("pages:messages.toasts.rejectErrorDescription") });
     }
   };
 
@@ -471,7 +489,7 @@ export default function Messages() {
       sender: raw.sender
         ? {
             id: raw.sender.id,
-            name: raw.sender.name || 'System',
+            name: raw.sender.name || systemName,
             avatarUrl: raw.sender.avatarUrl,
             avatarThumbnailUrl: raw.sender.avatarThumbnailUrl,
           }
@@ -571,7 +589,7 @@ export default function Messages() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="container mx-auto p-4 flex items-center justify-center h-[calc(100vh-5rem)]">
-          <p className="text-lg">Loading...</p>
+          <p className="text-lg">{t("pages:messages.loadingShell")}</p>
         </div>
       </div>
     );
@@ -583,9 +601,9 @@ export default function Messages() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="container mx-auto p-4 flex items-center justify-center h-[calc(100vh-5rem)]">
           <div className="text-center">
-            <p className="text-lg text-red-500 mb-4">You must be logged in</p>
+            <p className="text-lg text-red-500 mb-4">{t("pages:messages.loginRequired")}</p>
             <Button onClick={() => window.location.href = '/auth'}>
-              Log in
+              {t("common:buttons.logIn")}
             </Button>
           </div>
         </div>
@@ -601,14 +619,14 @@ export default function Messages() {
           {/* Chat list */}
           <Card className="h-[calc(100vh-8rem)] overflow-hidden w-1/3 min-w-[220px] max-w-xs">
             <CardHeader className="p-4">
-              <h2 className="text-lg font-semibold">Chats</h2>
+              <h2 className="text-lg font-semibold">{t("pages:messages.title")}</h2>
             </CardHeader>
             <ScrollArea className="h-full">
               <CardContent className="p-2 space-y-4">
                 {/* New requests */}
                 {groupedConversations.newChats.length > 0 && (
                   <div>
-                    <h3 className="px-2 py-1 text-sm font-medium text-muted-foreground">New requests</h3>
+                    <h3 className="px-2 py-1 text-sm font-medium text-muted-foreground">{sectionLabels.new}</h3>
                     {groupedConversations.newChats.map((conversation:any) => (
                       <ConversationItem
                         key={conversation.chatId}
@@ -628,7 +646,7 @@ export default function Messages() {
                 {/* Group chats */}
                 {groupedConversations.groupChats.length > 0 && (
                   <div>
-                    <h3 className="px-2 py-1 text-sm font-medium text-muted-foreground">Group chats</h3>
+                    <h3 className="px-2 py-1 text-sm font-medium text-muted-foreground">{sectionLabels.group}</h3>
                     {groupedConversations.groupChats.map((conversation:any) => (
                       <ConversationItem
                         key={conversation.chatId}
@@ -648,7 +666,7 @@ export default function Messages() {
                 {/* Private chats */}
                 {groupedConversations.privateChats.length > 0 && (
                   <div>
-                    <h3 className="px-2 py-1 text-sm font-medium text-muted-foreground">Private chats</h3>
+                    <h3 className="px-2 py-1 text-sm font-medium text-muted-foreground">{sectionLabels.private}</h3>
                     {groupedConversations.privateChats.map((conversation:any) => (
                       <ConversationItem
                         key={conversation.chatId}
@@ -668,7 +686,7 @@ export default function Messages() {
                 {/* Archived chats */}
                 {groupedConversations.archivedChats.length > 0 && (
                   <div>
-                    <h3 className="px-2 py-1 text-sm font-medium text-muted-foreground">Archived chats</h3>
+                    <h3 className="px-2 py-1 text-sm font-medium text-muted-foreground">{sectionLabels.archived}</h3>
                     {groupedConversations.archivedChats.map((conversation:any) => (
                       <ConversationItem
                         key={conversation.chatId}
@@ -687,7 +705,7 @@ export default function Messages() {
 
                 {conversations.length === 0 && (
                   <div className="text-center text-muted-foreground p-4">
-                    You have no messages yet
+                    {t("pages:messages.emptyList")}
                   </div>
                 )}
               </CardContent>
@@ -707,8 +725,8 @@ export default function Messages() {
                           setProfileUserId(selectedConversation.otherUser.id);
                         } else {
                           toast({
-                            title: "Profile unavailable",
-                            description: "Could not determine user for this chat.",
+                            title: t("pages:messages.profileUnavailableTitle"),
+                            description: t("pages:messages.profileUnavailableDescription"),
                             variant: "destructive",
                           });
                         }
@@ -730,11 +748,11 @@ export default function Messages() {
                   <ScrollArea className="flex-1 p-4 min-h-0 h-full">
                     {messagesLoading ? (
                       <div className="text-center text-muted-foreground">
-                        Loading messages...
+                        {t("pages:messages.loading")}
                       </div>
                     ) : messages.length === 0 ? (
                       <div className="text-center text-muted-foreground">
-                        Start a conversation!
+                        {t("pages:messages.emptyConversation")}
                       </div>
                     ) : (
                       <div className="space-y-4 flex-1">
@@ -781,6 +799,9 @@ export default function Messages() {
                                       getInitials={getInitials}
                                       onClick={() => setTripModalId(trip.id)}
                                       handleProfileClick={(e: any) => { e.stopPropagation(); setProfileUserId(trip.creator.id); }}
+                                      organizerLabel={t("common:generic.organizer")}
+                                      noDateLabel={t("common:generic.anyDate")}
+                                      dateLocale={dateFnsLocale}
                                     />
                                   </div>
                                   {/* Accept / Reject buttons block */}
@@ -798,14 +819,14 @@ export default function Messages() {
                                               disabled={isDisabled}
                                               onClick={() => handleRejectRequest(trip.id, message.senderId)}
                                             >
-                                              Reject
+                                              {t("common:buttons.reject")}
                                             </Button>
                                             <Button 
                                               className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400" 
                                               disabled={isDisabled}
                                               onClick={() => handleAcceptRequest(trip.id, message.senderId)}
                                             >
-                                              Accept
+                                              {t("common:buttons.accept")}
                                             </Button>
                                           </>
                                         );
@@ -823,7 +844,7 @@ export default function Messages() {
                                         className="h-8 w-8 mr-2 cursor-pointer"
                                         onClick={() => message.sender?.id && setProfileUserId(message.sender.id)}
                                         tabIndex={0}
-                                        aria-label={message.sender?.name ? `Open profile ${message.sender.name}` : 'Open profile'}
+                                        aria-label={getProfileAriaLabel(message.sender?.name)}
                                         onKeyDown={e => { if (e.key === 'Enter' && message.sender?.id) setProfileUserId(message.sender.id); }}
                                       >
                                         <AvatarImage src={message.sender.avatarUrl || undefined} alt={message.sender.name} />
@@ -869,7 +890,7 @@ export default function Messages() {
                                   className="h-8 w-8 mr-2 cursor-pointer"
                                   onClick={() => message.sender?.id && setProfileUserId(message.sender.id)}
                                   tabIndex={0}
-                                  aria-label={message.sender?.name ? `Open profile ${message.sender.name}` : 'Open profile'}
+                                    aria-label={getProfileAriaLabel(message.sender?.name)}
                                   onKeyDown={e => { if (e.key === 'Enter' && message.sender?.id) setProfileUserId(message.sender.id); }}
                                 >
                                   <AvatarImage src={message.sender.avatarUrl || undefined} alt={message.sender.name} />
@@ -912,7 +933,7 @@ export default function Messages() {
                     <div className="flex gap-2">
                       <Textarea
                         ref={inputRef}
-                        placeholder="Enter message..."
+                        placeholder={t("common:placeholders.message")}
                         value={messageText}
                         onChange={(e) => {
                           if (!selectedKey) return;
@@ -933,12 +954,14 @@ export default function Messages() {
                           onClick={handleSendMessage}
                           disabled={!messageText.trim() || sendMessageMutation.isPending}
                           size="icon"
+                          aria-label={t("common:buttons.send")}
                         >
                           <Send className="h-4 w-4" />
                         </Button>
                         <Button
                           disabled={true}
                           size="icon"
+                          aria-label={t("common:buttons.attach")}
                         >
                           <Paperclip className="h-4 w-4" />
                         </Button>
@@ -949,7 +972,7 @@ export default function Messages() {
               </>
             ) : (
               <div className="flex items-center justify-center h-full">
-                <p className="text-lg text-muted-foreground">Select a chat</p>
+                <p className="text-lg text-muted-foreground">{t("pages:messages.selectChat")}</p>
               </div>
             )}
           </Card>
