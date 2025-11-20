@@ -69,6 +69,15 @@
     "tests": "Тесты",
     "messages": "Сообщения"
   },
+  "userMenu": {
+    "admin": "Админка",
+    "profile": "Профиль",
+    "myRoutes": "Мои маршруты",
+    "myTrips": "Мои поездки",
+    "favorites": "Избранное",
+    "messages": "Сообщения",
+    "logout": "Выйти"
+  },
   "auth": {
     "loginSuccess": {
       "title": "Вход выполнен",

@@ -205,6 +205,64 @@
       "rejectSuccessDescription": "Запрос отклонён",
       "rejectErrorDescription": "Не удалось отклонить запрос"
     }
+  },
+  "tripModal": {
+    "dialogDescription": "Детали маршрута",
+    "notFoundTitle": "Маршрут не найден",
+    "notFoundDescription": "Такой маршрут не найден",
+    "loadingTitle": "Загружаем...",
+    "loadingDescription": "Загружаем...",
+    "sections": {
+      "details": "Информация о маршруте",
+      "description": "Описание",
+      "additionalPhotos": "Дополнительные фото",
+      "organizer": "Организатор",
+      "languages": "Языки:",
+      "messengers": "Мессенджеры:",
+      "participants": "Участники ({{count}})"
+    },
+    "stats": {
+      "participants": "{{current}}/{{max}} участников"
+    },
+    "organizer": {
+      "yearsOld": "{{count}} лет"
+    },
+    "gallery": {
+      "alt": "Фото {{index}}"
+    },
+    "badges": {
+      "creator": "Ты организатор этого маршрута",
+      "participant": "Ты участвуешь в маршруте",
+      "pending": "Запрос отправлен, ждём подтверждения",
+      "rejected": "Запрос отклонён",
+      "sent": "Запрос отправлен организатору",
+      "full": "Маршрут заполнен"
+    },
+    "join": {
+      "title": "Присоединиться к маршруту",
+      "subtitle": "Организатор увидит твой отклик",
+      "label": "Твоё сообщение",
+      "placeholder": "Напиши сообщение организатору...",
+      "default": "Привет! Хочу поехать с вами :)",
+      "loginRequired": "Чтобы написать организатору, нужно войти в аккаунт"
+    },
+    "buttons": {
+      "close": "Закрыть",
+      "send": "Отправить",
+      "sending": "Отправляем...",
+      "leave": "Покинуть маршрут",
+      "leaving": "Выходим..."
+    },
+    "toasts": {
+      "errorTitle": "Ошибка",
+      "requestError": "Не удалось отправить запрос",
+      "messageError": "Не удалось отправить сообщение",
+      "requestSentTitle": "Запрос отправлен",
+      "requestSentDescription": "Сообщение отправлено организатору",
+      "leaveSuccessTitle": "Готово",
+      "leaveSuccessDescription": "Ты покинул маршрут",
+      "leaveErrorDescription": "Не удалось выйти из маршрута"
+    }
   }
 }
 

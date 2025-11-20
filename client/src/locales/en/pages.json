@@ -205,6 +205,64 @@
       "rejectSuccessDescription": "Request rejected",
       "rejectErrorDescription": "Failed to reject request"
     }
+  },
+  "tripModal": {
+    "dialogDescription": "Trip details",
+    "notFoundTitle": "Route not found",
+    "notFoundDescription": "Trip not found",
+    "loadingTitle": "Loading...",
+    "loadingDescription": "Loading...",
+    "sections": {
+      "details": "Trip details",
+      "description": "Description",
+      "additionalPhotos": "Additional photos",
+      "organizer": "Organizer",
+      "languages": "Languages:",
+      "messengers": "Messengers:",
+      "participants": "Participants ({{count}})"
+    },
+    "stats": {
+      "participants": "{{current}}/{{max}} participants"
+    },
+    "organizer": {
+      "yearsOld": "{{count}} years old"
+    },
+    "gallery": {
+      "alt": "Photo {{index}}"
+    },
+    "badges": {
+      "creator": "You are the organizer of this trip",
+      "participant": "You are a trip participant",
+      "pending": "Request sent, awaiting approval",
+      "rejected": "Request rejected",
+      "sent": "Request sent to route creator",
+      "full": "Trip is full"
+    },
+    "join": {
+      "title": "Join trip",
+      "subtitle": "The route creator will see your response",
+      "label": "Your message",
+      "placeholder": "Write a message to the creator...",
+      "default": "Hi! I'd like to join :)",
+      "loginRequired": "To send a message to the creator, you need to log in"
+    },
+    "buttons": {
+      "close": "Close",
+      "send": "Send",
+      "sending": "Sending...",
+      "leave": "Leave trip",
+      "leaving": "Leaving..."
+    },
+    "toasts": {
+      "errorTitle": "Error",
+      "requestError": "Failed to send request",
+      "messageError": "Failed to send message",
+      "requestSentTitle": "Request sent",
+      "requestSentDescription": "Message sent to route creator",
+      "leaveSuccessTitle": "Success",
+      "leaveSuccessDescription": "You left the trip",
+      "leaveErrorDescription": "Failed to leave trip"
+    }
   }
 }
 

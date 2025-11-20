@@ -210,18 +210,18 @@ export default function Rules() {
                     : { bg: "bg-yellow-100 dark:bg-yellow-900", text: "text-yellow-600 dark:text-yellow-400" };
             return (
               <Card key={principle.title} className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-xl">
-                <CardHeader className="text-center pb-4">
+            <CardHeader className="text-center pb-4">
                   <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${colorConfig.bg}`}>
                     <Icon className={`h-8 w-8 ${colorConfig.text}`} />
-                  </div>
+              </div>
                   <CardTitle className="text-gray-900 dark:text-white">{principle.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-center text-gray-600 dark:text-gray-300">
+            </CardHeader>
+            <CardContent>
+              <CardDescription className="text-center text-gray-600 dark:text-gray-300">
                     {principle.description}
-                  </CardDescription>
-                </CardContent>
-              </Card>
+              </CardDescription>
+            </CardContent>
+          </Card>
             );
           })}
         </div>
@@ -250,13 +250,13 @@ export default function Rules() {
                   <p className="text-gray-700 dark:text-gray-300">{section.description}</p>
                 )}
                 {section.list && (
-                  <ul className="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-1">
+              <ul className="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-1">
                     {section.list.map((item) => (
                       <li key={item}>{item}</li>
                     ))}
-                  </ul>
+              </ul>
                 )}
-              </section>
+            </section>
             ))}
           </CardContent>
         </Card>

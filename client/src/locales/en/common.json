@@ -69,6 +69,15 @@
     "tests": "Tests",
     "messages": "Messages"
   },
+  "userMenu": {
+    "admin": "Admin",
+    "profile": "Profile",
+    "myRoutes": "My routes",
+    "myTrips": "My trips",
+    "favorites": "Favorites",
+    "messages": "Messages",
+    "logout": "Log out"
+  },
   "auth": {
     "loginSuccess": {
       "title": "Login successful",

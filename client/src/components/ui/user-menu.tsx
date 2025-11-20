@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown, User, MapPin, Route, Heart, MessageCircle, Star, Settings, LogOut } from "lucide-react";
 import { Link } from "wouter";
+import { useTranslation } from "react-i18next";
 
 interface UserMenuProps {
   user: {
@@ -27,6 +28,7 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
+  const { t } = useTranslation("common");
 
   if (!user) {
     return null;
@@ -69,38 +71,38 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
           <DropdownMenuItem asChild>
             <Link href="/admin" className="flex items-center space-x-2 cursor-pointer">
               <Settings className="h-4 w-4" />
-              <span>Admin</span>
+              <span>{t("userMenu.admin")}</span>
             </Link>
           </DropdownMenuItem>
         )}
         <DropdownMenuItem asChild>
           <Link href="/profile" className="flex items-center space-x-2 cursor-pointer">
             <User className="h-4 w-4" />
-            <span>Profile</span>
+            <span>{t("userMenu.profile")}</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/my-routes" className="flex items-center space-x-2 cursor-pointer">
             <MapPin className="h-4 w-4" />
-            <span>My routes</span>
+            <span>{t("userMenu.myRoutes")}</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/my-trips" className="flex items-center space-x-2 cursor-pointer">
             <Route className="h-4 w-4" />
-            <span>My trips</span>
+            <span>{t("userMenu.myTrips")}</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/favorites" className="flex items-center space-x-2 cursor-pointer">
             <Heart className="h-4 w-4" />
-            <span>Favorites</span>
+            <span>{t("userMenu.favorites")}</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/messages" className="flex items-center space-x-2 cursor-pointer">
             <MessageCircle className="h-4 w-4" />
-            <span>Messages</span>
+            <span>{t("userMenu.messages")}</span>
           </Link>
         </DropdownMenuItem>
         {/* <DropdownMenuItem asChild>
@@ -118,7 +120,7 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={onLogout} className="flex items-center space-x-2 cursor-pointer text-red-600 dark:text-red-400">
           <LogOut className="h-4 w-4" />
-          <span>Log out</span>
+          <span>{t("userMenu.logout")}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

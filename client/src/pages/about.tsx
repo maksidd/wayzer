@@ -214,18 +214,18 @@ export default function About() {
                     : { bg: "bg-purple-100 dark:bg-purple-900", text: "text-purple-600 dark:text-purple-400" };
               return (
                 <Card key={feature.title} className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-xl">
-                  <CardHeader className="text-center pb-4">
+              <CardHeader className="text-center pb-4">
                     <div className={`w-16 h-16 ${colorConfig.bg} rounded-full flex items-center justify-center mx-auto mb-4`}>
                       <Icon className={`h-8 w-8 ${colorConfig.text}`} />
-                    </div>
+                </div>
                     <CardTitle className="text-gray-900 dark:text-white">{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-center text-gray-600 dark:text-gray-300">
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-center text-gray-600 dark:text-gray-300">
                       {feature.description}
-                    </CardDescription>
-                  </CardContent>
-                </Card>
+                </CardDescription>
+              </CardContent>
+            </Card>
               );
             })}
           </div>
@@ -241,7 +241,7 @@ export default function About() {
                 <div className="text-blue-100 flex items-center justify-center gap-1">
                   {stat.label === copy.stats[copy.stats.length - 1].label && <Star className="h-4 w-4 fill-current" />}
                   {stat.label}
-                </div>
+            </div>
               </div>
             ))}
           </div>

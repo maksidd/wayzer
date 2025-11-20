@@ -774,7 +774,7 @@ export default function CreateTrip() {
                                   }}
                                 >
                                   {city.name}
-                                </div>
+                  </div>
                               ))}
                             </div>
                           )}

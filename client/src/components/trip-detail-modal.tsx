@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   MapPin, 
@@ -22,10 +21,6 @@ import {
   Mail,
   MessageCircle,
   X,
-  MapIcon,
-  Clock,
-  Send,
-  MessageSquare
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -36,6 +31,9 @@ import { FavoriteButton } from "@/components/favorite-button";
 import { GalleryModal } from "@/components/gallery-modal";
 import React from "react";
 import { UserProfileModal } from "@/components/user-profile-modal";
+import { format } from "date-fns";
+import { enUS, ru as ruLocale } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 
 const transportIcons = {
   car: Car,
@@ -64,7 +62,11 @@ interface TripDetailModalProps {
 }
 
 export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProps) {
-  const [joinMessage, setJoinMessage] = useState("Hi! I'd like to join :)");
+  const { t, i18n } = useTranslation(["pages", "common"]);
+  const resolvedLanguage = i18n.resolvedLanguage ?? i18n.language ?? "en";
+  const dateFnsLocale = resolvedLanguage.startsWith("ru") ? ruLocale : enUS;
+  const defaultJoinMessage = t("pages:tripModal.join.default");
+  const [joinMessage, setJoinMessage] = useState(defaultJoinMessage);
   const [hasAlreadyResponded, setHasAlreadyResponded] = useState(false);
   const [joinRequestSent, setJoinRequestSent] = useState(false);
   const { toast } = useToast();
@@ -126,14 +128,14 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
       return response.json();
     },
     onSuccess: () => {
-      setJoinMessage("Hi! I'd like to join :)");
+      setJoinMessage(defaultJoinMessage);
       queryClient.invalidateQueries({ queryKey: ["/api/trips", tripId, "status"] });
       queryClient.invalidateQueries({ queryKey: ["/api/trips", tripId, "participants"] });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to send request",
+        title: t("pages:tripModal.toasts.errorTitle"),
+        description: error.message || t("pages:tripModal.toasts.requestError"),
         variant: "destructive",
       });
     },
@@ -160,16 +162,16 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
       setHasAlreadyResponded(true);
       joinTripMutation.mutate();
       toast({
-        title: "Request sent",
-        description: "Message sent to route creator",
+        title: t("pages:tripModal.toasts.requestSentTitle"),
+        description: t("pages:tripModal.toasts.requestSentDescription"),
       });
       queryClient.invalidateQueries({ queryKey: ['/api/messages/conversations2'] });
       queryClient.invalidateQueries({ queryKey: ["/api/trips", tripId, "status"] });
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to send message",
+        title: t("pages:tripModal.toasts.errorTitle"),
+        description: t("pages:tripModal.toasts.messageError"),
         variant: "destructive",
       });
     },
@@ -183,16 +185,16 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "You left the trip",
+        title: t("pages:tripModal.toasts.leaveSuccessTitle"),
+        description: t("pages:tripModal.toasts.leaveSuccessDescription"),
       });
       queryClient.invalidateQueries({ queryKey: ["/api/trips", tripId, "participants"] });
       queryClient.invalidateQueries({ queryKey: ["/api/trips", tripId] });
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to leave trip",
+        title: t("pages:tripModal.toasts.errorTitle"),
+        description: t("pages:tripModal.toasts.leaveErrorDescription"),
         variant: "destructive",
       });
     },
@@ -227,10 +229,12 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogTitle>Route not found</DialogTitle>
+          <DialogTitle>{t("pages:tripModal.notFoundTitle")}</DialogTitle>
           <div className="text-center py-8">
-            <p className="text-gray-500">Trip not found</p>
-            <Button onClick={onClose} className="mt-4">Close</Button>
+            <p className="text-gray-500">{t("pages:tripModal.notFoundDescription")}</p>
+            <Button onClick={onClose} className="mt-4">
+              {t("pages:tripModal.buttons.close")}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -241,10 +245,10 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogTitle>Loading...</DialogTitle>
+          <DialogTitle>{t("pages:tripModal.loadingTitle")}</DialogTitle>
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading...</p>
+            <p className="mt-4 text-gray-600">{t("pages:tripModal.loadingDescription")}</p>
           </div>
         </DialogContent>
       </Dialog>
@@ -267,13 +271,9 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
   const canJoin = user && !isParticipant && !isCreator && participants.length < trip.maxParticipants;
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return "";
+    return format(date, "d MMMM yyyy, HH:mm", { locale: dateFnsLocale });
   };
 
   const getInitials = (name: string) => {
@@ -293,7 +293,7 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogDescription className="sr-only">Trip details</DialogDescription>
+        <DialogDescription className="sr-only">{t("pages:tripModal.dialogDescription")}</DialogDescription>
         <DialogHeader>
           <DialogTitle>{trip.title}</DialogTitle>
         </DialogHeader>
@@ -304,7 +304,7 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
             <div className="space-y-4">
               <Card>
                 <CardContent className="p-4">
-                  <h3 className="font-semibold text-lg mb-3">Trip details</h3>
+                  <h3 className="font-semibold text-lg mb-3">{t("pages:tripModal.sections.details")}</h3>
                   <div className="space-y-3">
                     <div className="flex items-center space-x-2">
                       <MapPin className="h-4 w-4 text-gray-500" />
@@ -316,7 +316,7 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
                     </div>
                     <div className="flex items-center space-x-2">
                       <Users className="h-4 w-4 text-gray-500" />
-                      <span>{participants.length}/{trip.maxParticipants} participants</span>
+                      <span>{t("pages:tripModal.stats.participants", { current: participants.length, max: trip.maxParticipants })}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -324,7 +324,7 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
               {trip.description && (
                 <Card>
                   <CardContent className="p-4">
-                    <h3 className="font-semibold text-lg mb-3">Description</h3>
+                    <h3 className="font-semibold text-lg mb-3">{t("pages:tripModal.sections.description")}</h3>
                     <p className="text-gray-600 whitespace-pre-wrap">{trip.description}</p>
                   </CardContent>
                 </Card>
@@ -345,13 +345,13 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
               {trip.additionalPhotos && trip.additionalPhotos.length > 0 && (
                 <Card>
                   <CardContent className="p-4">
-                    <h3 className="font-semibold text-lg mb-3">Additional photos</h3>
+                    <h3 className="font-semibold text-lg mb-3">{t("pages:tripModal.sections.additionalPhotos")}</h3>
                     <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4">
                       {trip.additionalPhotos.map((photo: string, index: number) => (
                         <div key={index} className="aspect-square rounded-lg overflow-hidden transition duration-300 ease-in-out hover:scale-105 hover:cursor-zoom-in">
                           <img
                             src={photo}
-                            alt={`Photo ${index + 1}`}
+                            alt={t("pages:tripModal.gallery.alt", { index: index + 1 })}
                             className="w-full h-full object-cover"
                             onClick={() => { setGalleryIndex((trip.mainPhotoUrl ? 1 : 0) + index); setGalleryOpen(true); }}
                           />
@@ -394,7 +394,7 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
               {/* Creator Info */}
               <Card>
                 <CardContent className="p-4">
-                  <h3 className="font-semibold text-lg mb-3">Organizer</h3>
+                  <h3 className="font-semibold text-lg mb-3">{t("pages:tripModal.sections.organizer")}</h3>
                   <div className="flex items-start space-x-3">
                     <Avatar className="h-16 w-16 cursor-pointer" onClick={() => setProfileUserId(trip.creator.id)}>
                       <AvatarImage 
@@ -408,7 +408,7 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
                     <div className="flex-1">
                       <h4 className="font-medium text-lg">{trip.creator.name}</h4>
                       {trip.creator.age && (
-                        <p className="text-gray-500 text-sm">{trip.creator.age} years old</p>
+                        <p className="text-gray-500 text-sm">{t("pages:tripModal.organizer.yearsOld", { count: trip.creator.age })}</p>
                       )}
                       {trip.creator.bio && (
                         <p className="text-gray-600 text-sm mt-1">{trip.creator.bio}</p>
@@ -433,7 +433,7 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
                       )}
                       {trip.creator.languages && trip.creator.languages.length > 0 && (
                         <div className="mt-2">
-                          <p className="text-xs text-gray-500 mb-1">Languages:</p>
+                          <p className="text-xs text-gray-500 mb-1">{t("pages:tripModal.sections.languages")}</p>
                           <div className="flex flex-wrap gap-1">
                             {trip.creator.languages.map((lang: string, index: number) => (
                               <Badge key={index} variant="outline" className="text-xs">
@@ -445,7 +445,7 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
                       )}
                       {trip.creator.messengers && Object.keys(trip.creator.messengers).length > 0 && (
                         <div className="mt-2">
-                          <p className="text-xs text-gray-500 mb-1">Messengers:</p>
+                          <p className="text-xs text-gray-500 mb-1">{t("pages:tripModal.sections.messengers")}</p>
                           <div className="space-y-1">
                             {Object.entries(trip.creator.messengers).map(([type, username], index) => (
                               <div key={index} className="flex items-center space-x-2 text-sm">
@@ -467,7 +467,7 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
               {participants.length > 0 && (
                 <Card>
                   <CardContent className="p-4">
-                    <h3 className="font-semibold text-lg mb-3">Participants ({participants.length})</h3>
+                    <h3 className="font-semibold text-lg mb-3">{t("pages:tripModal.sections.participants", { count: participants.length })}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {participants.map((participant: any) => (
                         <div key={participant.id} className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
@@ -502,47 +502,47 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
                   <div className="space-y-3">
                     {isCreator && (
                       <Badge variant="secondary" className="w-full justify-center py-2">
-                        You are the organizer of this trip
+                        {t("pages:tripModal.badges.creator")}
                       </Badge>
                     )}
 
                     {isParticipant && (
                       <Badge variant="secondary" className="w-full justify-center py-2 bg-green-100 text-green-800 border-green-200">
-                        You are a trip participant
+                        {t("pages:tripModal.badges.participant")}
                       </Badge>
                     )}
 
                     {hasPendingApplication && (
                       <Badge variant="secondary" className="w-full justify-center py-2 bg-yellow-100 text-yellow-800 border-yellow-200">
-                        Request sent, awaiting approval
+                        {t("pages:tripModal.badges.pending")}
                       </Badge>
                     )}
 
                     {isRejected && (
                       <Badge variant="secondary" className="w-full justify-center py-2 bg-red-100 text-red-800 border-red-200">
-                        Request rejected
+                        {t("pages:tripModal.badges.rejected")}
                       </Badge>
                     )}
 
                     {user && !isCreator && !userStatus && participants.length < trip.maxParticipants && !joinRequestSent && (
                       <div className="space-y-3">
                         <div className="text-center">
-                          <h4 className="font-semibold text-lg">Join trip</h4>
+                          <h4 className="font-semibold text-lg">{t("pages:tripModal.join.title")}</h4>
                           <p className="text-sm text-gray-600 mt-1">
-                            The route creator will see your response
+                            {t("pages:tripModal.join.subtitle")}
                           </p>
                         </div>
                         
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Your message
+                            {t("pages:tripModal.join.label")}
                           </label>
-                          <textarea
+                          <Textarea
                             value={joinMessage}
                             onChange={(e) => setJoinMessage(e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full resize-none"
                             rows={3}
-                            placeholder="Write a message to the creator..."
+                            placeholder={t("pages:tripModal.join.placeholder")}
                           />
                         </div>
                         
@@ -551,7 +551,7 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
                           onClick={handleJoinTrip}
                           disabled={sendJoinMessageMutation.isPending || !joinMessage.trim()}
                         >
-                          {sendJoinMessageMutation.isPending ? "Sending..." : "Send"}
+                          {sendJoinMessageMutation.isPending ? t("pages:tripModal.buttons.sending") : t("pages:tripModal.buttons.send")}
                         </Button>
                       </div>
                     )}
@@ -559,7 +559,7 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
                     {/* If not logged in — show custom block */}
                     {!user && (
                       <div className="space-y-3 text-center">
-                        <h4 className="font-semibold text-lg">To send a message to the creator, you need to log in</h4>
+                        <h4 className="font-semibold text-lg">{t("pages:tripModal.join.loginRequired")}</h4>
                         <div className="flex flex-col sm:flex-row gap-3 justify-center mt-4">
                           <Button
                             variant="outline"
@@ -568,7 +568,7 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
                               setLocation('/auth');
                             }}
                           >
-                            Log in
+                            {t("common:buttons.logIn")}
                           </Button>
                           <Button
                             className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -577,7 +577,7 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
                               setLocation('/auth?mode=register');
                             }}
                           >
-                            Sign up
+                            {t("common:buttons.signUp")}
                           </Button>
                         </div>
                       </div>
@@ -585,13 +585,13 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
 
                     {joinRequestSent && !userStatus && (
                       <Badge variant="secondary" className="w-full justify-center py-2 bg-blue-100 text-blue-800 border-blue-200">
-                        Request sent to route creator
+                        {t("pages:tripModal.badges.sent")}
                       </Badge>
                     )}
 
                     {user && !isCreator && !userStatus && participants.length >= trip.maxParticipants && (
                       <Badge variant="secondary" className="w-full justify-center py-2 bg-gray-100 text-gray-800 border-gray-200">
-                        Trip is full
+                        {t("pages:tripModal.badges.full")}
                       </Badge>
                     )}
 
@@ -602,7 +602,7 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
                         onClick={() => leaveTripMutation.mutate()}
                         disabled={leaveTripMutation.isPending}
                       >
-                        {leaveTripMutation.isPending ? "Leaving..." : "Leave trip"}
+                        {leaveTripMutation.isPending ? t("pages:tripModal.buttons.leaving") : t("pages:tripModal.buttons.leave")}
                       </Button>
                     )}
                   </div>
