@@ -2,6 +2,7 @@ import { spawn } from 'child_process';
 import http from 'http';
 import WebSocket from 'ws';
 import util from 'util';
+import { Buffer } from 'buffer';
 
 // Comprehensive test runner for all API endpoints
 async function runTests() {
@@ -169,6 +170,9 @@ async function runTests() {
     return util.inspect(data, { depth: 3, breakLength: 120 });
   };
 
+  const FALLBACK_AVATAR_BASE64 =
+    'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAJ0lEQVQoU2NkYGBg+M+ABYwMjIwMjCgGJQwGQqkGmA0TQwGg4kFAAAnl8L/Q8kvx8AAAAASUVORK5CYII=';
+
   console.log('\r\n🔵 Uploading user avatar');
   await test('Upload user avatar', async () => {
     testsTotal++;
@@ -187,30 +191,45 @@ async function runTests() {
       throw new Error(`Failed to fetch random user data: ${randomUserResponse.status} ${errorText}`);
     }
 
-    const randomUserData = await randomUserResponse.json();
-    const avatarUrl = randomUserData.results[0].picture.large;
-    console.log(`[avatar] fetched avatar URL: ${avatarUrl}`);
+    let avatarBlob;
+    let avatarFilename = 'avatar.jpg';
+    let avatarSource = 'randomuser.me';
 
-    let imageResponse;
-    try {
-      imageResponse = await fetch(avatarUrl);
-    } catch (downloadErr) {
-      console.error('[avatar] avatar download threw:', formatNetworkError(downloadErr));
-      throw new Error(`Failed to fetch avatar image (network error: ${downloadErr.message})`);
+    if (randomUserResponse.ok) {
+      const randomUserData = await randomUserResponse.json();
+      const avatarUrl = randomUserData.results[0].picture.large;
+      console.log(`[avatar] fetched avatar URL: ${avatarUrl}`);
+
+      let imageResponse;
+      try {
+        imageResponse = await fetch(avatarUrl);
+      } catch (downloadErr) {
+        console.error('[avatar] avatar download threw:', formatNetworkError(downloadErr));
+        console.warn('[avatar] falling back to embedded avatar');
+      }
+
+      if (imageResponse?.ok) {
+        console.log(`[avatar] avatar download status: ${imageResponse.status}`);
+        const imageBuffer = await imageResponse.arrayBuffer();
+        console.log(`[avatar] avatar image size: ${imageBuffer.byteLength} bytes`);
+        avatarBlob = new Blob([imageBuffer], { type: 'image/jpeg' });
+      } else if (imageResponse) {
+        const errorText = await imageResponse.text().catch(() => '<no body>');
+        console.warn(`[avatar] Failed to fetch avatar image (${avatarUrl}): ${imageResponse.status} ${errorText}`);
+      }
     }
 
-    console.log(`[avatar] avatar download status: ${imageResponse.status}`);
-    if (!imageResponse.ok) {
-      const errorText = await imageResponse.text().catch(() => '<no body>');
-      throw new Error(`Failed to fetch avatar image (${avatarUrl}): ${imageResponse.status} ${errorText}`);
+    if (!avatarBlob) {
+      const fallbackBuffer = Buffer.from(FALLBACK_AVATAR_BASE64, 'base64');
+      avatarBlob = new Blob([fallbackBuffer], { type: 'image/png' });
+      avatarFilename = 'avatar-fallback.png';
+      avatarSource = 'embedded-fallback';
+      console.warn('[avatar] using embedded fallback avatar');
     }
-
-    const imageBuffer = await imageResponse.arrayBuffer();
-    console.log(`[avatar] avatar image size: ${imageBuffer.byteLength} bytes`);
-    const imageBlob = new Blob([imageBuffer], { type: 'image/jpeg' });
 
     const formData = new FormData();
-    formData.append('avatar', imageBlob, 'avatar.jpg');
+    formData.append('avatar', avatarBlob, avatarFilename);
+    formData.append('avatarSource', avatarSource);
 
     const uploadResponse = await fetch('http://localhost:5000/api/users/avatar', {
       method: 'POST',
