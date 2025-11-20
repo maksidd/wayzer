@@ -153,19 +153,25 @@ async function runTests() {
     testsTotal++;
 
     const randomUserResponse = await fetch('https://randomuser.me/api/?gender=male&nat=us');
+    console.log(`[avatar] randomuser.me status: ${randomUserResponse.status}`);
     if (!randomUserResponse.ok) {
-      throw new Error('Failed to fetch random user data');
+      const errorText = await randomUserResponse.text().catch(() => '<no body>');
+      throw new Error(`Failed to fetch random user data: ${randomUserResponse.status} ${errorText}`);
     }
 
     const randomUserData = await randomUserResponse.json();
     const avatarUrl = randomUserData.results[0].picture.large;
+    console.log(`[avatar] fetched avatar URL: ${avatarUrl}`);
 
     const imageResponse = await fetch(avatarUrl);
+    console.log(`[avatar] avatar download status: ${imageResponse.status}`);
     if (!imageResponse.ok) {
-      throw new Error('Failed to fetch avatar image');
+      const errorText = await imageResponse.text().catch(() => '<no body>');
+      throw new Error(`Failed to fetch avatar image (${avatarUrl}): ${imageResponse.status} ${errorText}`);
     }
 
     const imageBuffer = await imageResponse.arrayBuffer();
+    console.log(`[avatar] avatar image size: ${imageBuffer.byteLength} bytes`);
     const imageBlob = new Blob([imageBuffer], { type: 'image/jpeg' });
 
     const formData = new FormData();
@@ -179,12 +185,20 @@ async function runTests() {
       body: formData
     });
 
+    console.log(`[avatar] upload response status: ${uploadResponse.status}`);
+    const uploadResponseText = await uploadResponse.text();
+    console.log(`[avatar] upload response body (first 500 chars): ${uploadResponseText.slice(0, 500)}`);
+
     if (uploadResponse.status !== 200) {
-      const errorData = await uploadResponse.text();
-      throw new Error(`Expected 200, got ${uploadResponse.status}: ${errorData}`);
+      throw new Error(`Expected 200, got ${uploadResponse.status}: ${uploadResponseText}`);
     }
 
-    const uploadData = await uploadResponse.json();
+    let uploadData;
+    try {
+      uploadData = uploadResponseText ? JSON.parse(uploadResponseText) : {};
+    } catch (parseError) {
+      throw new Error(`Avatar upload response is not valid JSON: ${parseError.message}. Body: ${uploadResponseText}`);
+    }
     if (!uploadData.avatarUrl || !uploadData.avatarThumbnailUrl) {
       throw new Error('Avatar upload response missing URLs');
     }
