@@ -26,7 +26,41 @@
     "signUp": "Sign up",
     "createRoute": "Create route",
     "viewRoutes": "View routes",
-    "backHome": "← Back to home"
+    "backHome": "← Back to home",
+    "save": "Save",
+    "saving": "Saving...",
+    "add": "Add",
+    "cancel": "Cancel",
+    "accept": "Accept",
+    "reject": "Reject",
+    "send": "Send",
+    "attach": "Attach"
+  },
+  "fields": {
+    "name": "Name",
+    "city": "City",
+    "gender": "Gender",
+    "age": "Age",
+    "phone": "Phone",
+    "email": "Email",
+    "languages": "Languages",
+    "about": "About",
+    "title": "Title",
+    "description": "Description",
+    "date": "Date",
+    "time": "Time",
+    "maxParticipants": "Participants",
+    "messengers": "Messengers"
+  },
+  "genderOptions": {
+    "male": "Male",
+    "female": "Female",
+    "other": "Other"
+  },
+  "placeholders": {
+    "notSpecified": "Not specified",
+    "languageInput": "Add language",
+    "message": "Write a message..."
   },
   "nav": {
     "routes": "Routes",

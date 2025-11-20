@@ -45,7 +45,7 @@ export default function Landing() {
         {paragraphs.map((text, index) => (
           <p key={index} className="max-w-xl text-center text-base md:text-lg text-gray-600 dark:text-gray-600 mb-8">
             {text}
-          </p>
+        </p> 
         ))}
         <div className="flex flex-col sm:flex-row gap-4 mb-10">
           {user ? (

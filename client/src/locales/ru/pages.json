@@ -74,6 +74,37 @@
       "signingUp": "Регистрируем..."
     },
     "backLink": "← Назад на главную"
+  },
+  "notFound": {
+    "title": "404 Страница не найдена",
+    "description": "Ты точно добавил эту страницу в роутер?"
+  },
+  "profile": {
+    "title": "Профиль",
+    "subtitle": "Нажми на иконку редактирования рядом с полем, чтобы его изменить",
+    "mainPhoto": "Главное фото",
+    "additionalPhotos": "Дополнительные фото",
+    "languageEmpty": "Не указано",
+    "languagePlaceholder": "Добавить язык",
+    "loading": "Загружаем профиль...",
+    "error": "Не удалось загрузить профиль. Попробуй обновить страницу.",
+    "age": {
+      "select": "Выбери возраст",
+      "clear": "Очистить возраст",
+      "yearsOld": "{{count}} лет"
+    },
+    "toasts": {
+      "updatedTitle": "Профиль обновлён",
+      "updatedDescription": "Изменения успешно сохранены",
+      "errorTitle": "Ошибка",
+      "errorDescription": "Что-то пошло не так",
+      "avatarTitle": "Аватар обновлён",
+      "avatarDescription": "Фото профиля успешно загружено",
+      "photosAddedTitle": "Фото добавлены",
+      "photosAddedDescription": "Дополнительные фото успешно загружены",
+      "photoDeletedTitle": "Фото удалено",
+      "photoDeletedDescription": "Фото успешно удалено"
+    }
   }
 }
 

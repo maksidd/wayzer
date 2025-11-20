@@ -98,4 +98,4 @@ export const TripCard = ({
       </div>
     </CardContent>
   </Card>
-);
+); 

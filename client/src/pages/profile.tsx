@@ -6,8 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Header } from "@/components/ui/header";
-import { Edit2, User, MapPin, Phone, Mail, MessageSquare, Camera, Plus, X, Languages } from "lucide-react";
+import { Edit2, User, MapPin, Phone, Mail, MessageSquare, Camera, Plus, X } from "lucide-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -19,6 +18,7 @@ import { z } from "zod";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { useRef } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useTranslation } from "react-i18next";
 
 interface EditableFieldProps {
   label: string;
@@ -205,6 +205,7 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 export default function Profile() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { t } = useTranslation(["pages", "common"]);
   const { data: user, isLoading, isError, error } = useQuery({
     queryKey: ["/api/users/me"],
     queryFn: async () => {
@@ -301,15 +302,15 @@ export default function Profile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
       toast({
-        title: "Profile updated",
-        description: "Changes saved successfully",
+        title: t("pages:profile.toasts.updatedTitle"),
+        description: t("pages:profile.toasts.updatedDescription"),
       });
     },
     onError: (error: any) => {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to update profile",
+        title: t("pages:profile.toasts.errorTitle"),
+        description: error.message || t("pages:profile.toasts.errorDescription"),
       });
     },
   });
@@ -337,15 +338,15 @@ export default function Profile() {
       setAvatarLoading(true);
       
       toast({
-        title: "Avatar updated",
-        description: "Profile photo uploaded successfully",
+        title: t("pages:profile.toasts.avatarTitle"),
+        description: t("pages:profile.toasts.avatarDescription"),
       });
     },
     onError: (error: any) => {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to upload photo",
+        title: t("pages:profile.toasts.errorTitle"),
+        description: error.message || t("pages:profile.toasts.errorDescription"),
       });
     },
   });
@@ -416,15 +417,15 @@ export default function Profile() {
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
       queryClient.refetchQueries({ queryKey: ["/api/users/me"] });
       toast({
-        title: "Photos added",
-        description: "Additional photos uploaded successfully",
+        title: t("pages:profile.toasts.photosAddedTitle"),
+        description: t("pages:profile.toasts.photosAddedDescription"),
       });
     },
     onError: (error: any) => {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to upload photo",
+        title: t("pages:profile.toasts.errorTitle"),
+        description: error.message || t("pages:profile.toasts.errorDescription"),
       });
     },
   });
@@ -439,15 +440,15 @@ export default function Profile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
       toast({
-        title: "Photo deleted",
-        description: "Photo deleted successfully",
+        title: t("pages:profile.toasts.photoDeletedTitle"),
+        description: t("pages:profile.toasts.photoDeletedDescription"),
       });
     },
     onError: (error: any) => {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to delete photo",
+        title: t("pages:profile.toasts.errorTitle"),
+        description: error.message || t("pages:profile.toasts.errorDescription"),
       });
     },
   });
@@ -520,7 +521,7 @@ export default function Profile() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600 dark:text-gray-400">Loading profile...</p>
+          <p className="text-gray-600 dark:text-gray-400">{t("pages:profile.loading")}</p>
         </div>
       </div>
     );
@@ -537,7 +538,7 @@ export default function Profile() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-500">Failed to load profile. Try refreshing the page.</p>
+          <p className="text-red-500">{t("pages:profile.error")}</p>
         </div>
       </div>
     );
@@ -553,10 +554,10 @@ export default function Profile() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <User className="h-5 w-5" />
-              <span>Profile</span>
+              <span>{t("pages:profile.title")}</span>
             </CardTitle>
             <CardDescription>
-              Click the edit icon next to a field to change it
+              {t("pages:profile.subtitle")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-8">
@@ -564,7 +565,7 @@ export default function Profile() {
             {user && (
             <div className="flex flex-col md:flex-row gap-8 items-start">
               <div className="flex flex-col items-center">
-                <span className="font-medium text-gray-900 dark:text-white mb-3">Main photo</span>
+                <span className="font-medium text-gray-900 dark:text-white mb-3">{t("pages:profile.mainPhoto")}</span>
                 <div className="relative inline-block">
                   <Avatar className="h-32 w-32 mx-auto">
                     <AvatarImage 
@@ -608,7 +609,7 @@ export default function Profile() {
                 </div>
               </div>
               <div className="flex-1 w-full">
-                <h3 className="font-medium text-gray-900 dark:text-white mb-3">Additional photos</h3>
+                <h3 className="font-medium text-gray-900 dark:text-white mb-3">{t("pages:profile.additionalPhotos")}</h3>
                 <div className="grid grid-cols-3 gap-2">
                   {user.additionalPhotos?.map((photo: string, index: number) => (
                     <div key={`${photo}-${index}`} className="relative">
@@ -653,7 +654,7 @@ export default function Profile() {
                       onClick={triggerPhotosUpload}
                     >
                         <Plus className="h-6 w-6 text-gray-400" />
-                        <span className="text-xs mt-1">Add</span>
+                        <span className="text-xs mt-1">{t("common:buttons.add")}</span>
                     </Button>
                     </div>
                   </div>
@@ -672,7 +673,7 @@ export default function Profile() {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Name</FormLabel>
+                          <FormLabel>{t("common:fields.name")}</FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -686,7 +687,7 @@ export default function Profile() {
                     name="city"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>City</FormLabel>
+                        <FormLabel>{t("common:fields.city")}</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Input
@@ -698,14 +699,14 @@ export default function Profile() {
                                 setCityInput(e.target.value);
                                 field.onChange(e.target.value);
                               }}
-                              placeholder="Enter city or select from list"
+                              placeholder={t("trips:filters.cityPlaceholder")}
                               autoComplete="off"
                               className={cityInput ? "pr-10" : undefined}
                             />
                             {cityInput && (
                               <button
                                 type="button"
-                                aria-label="Clear city"
+                                aria-label={t("common:generic.clearCity")}
                                 className="absolute inset-y-0 right-2 flex items-center text-gray-400 hover:text-gray-700 dark:hover:text-white"
                                 onMouseDown={event => {
                                   event.preventDefault();
@@ -750,16 +751,16 @@ export default function Profile() {
                       name="gender"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Gender</FormLabel>
+                        <FormLabel>{t("common:fields.gender")}</FormLabel>
                           <FormControl>
                             <Select value={field.value} onValueChange={field.onChange}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Not specified" />
+                        <SelectValue placeholder={t("common:placeholders.notSpecified")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="male">Male</SelectItem>
-                        <SelectItem value="female">Female</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
+                        <SelectItem value="male">{t("common:genderOptions.male")}</SelectItem>
+                        <SelectItem value="female">{t("common:genderOptions.female")}</SelectItem>
+                        <SelectItem value="other">{t("common:genderOptions.other")}</SelectItem>
                       </SelectContent>
                     </Select>
                           </FormControl>
@@ -773,7 +774,7 @@ export default function Profile() {
                       name="age"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Age</FormLabel>
+                        <FormLabel>{t("common:fields.age")}</FormLabel>
                           <FormControl>
                     <Popover open={agePickerOpen} onOpenChange={setAgePickerOpen}>
                       <PopoverTrigger asChild>
@@ -781,11 +782,11 @@ export default function Profile() {
                           type="button"
                           className="w-full h-10 px-3 border border-input rounded-md bg-background text-sm text-gray-900 dark:text-white flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                           tabIndex={0}
-                          aria-label="Select age"
+                          aria-label={t("pages:profile.age.select")}
                           onClick={() => setAgePickerOpen(true)}
                         >
                                   <span className={field.value ? "" : "text-black text-sm"}>
-                                    {field.value ? `${field.value} years old` : "Not specified"}
+                                    {field.value ? t("pages:profile.age.yearsOld", { count: field.value }) : t("common:placeholders.notSpecified")}
                           </span>
                                   {field.value && (
                             <X
@@ -796,7 +797,7 @@ export default function Profile() {
                                 setAgePickerOpen(false);
                               }}
                               tabIndex={0}
-                              aria-label="Clear age"
+                              aria-label={t("pages:profile.age.clear")}
                             />
                           )}
                         </button>
@@ -833,7 +834,7 @@ export default function Profile() {
                       name="phone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Phone</FormLabel>
+                          <FormLabel>{t("common:fields.phone")}</FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -843,7 +844,7 @@ export default function Profile() {
                     />
                     {/* Email now also in FormItem for same spacing */}
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>{t("common:fields.email")}</FormLabel>
                       <FormControl>
                     <Input value={user.email} disabled />
                       </FormControl>
@@ -856,7 +857,7 @@ export default function Profile() {
                     name="languages"
                     render={() => (
                       <FormItem className="mt-4">
-                        <FormLabel>Languages</FormLabel>
+                        <FormLabel>{t("common:fields.languages")}</FormLabel>
                     <div className="flex flex-wrap gap-2 mb-2">
                           {(form.getValues('languages') || []).map((lang, idx) => (
                         <Badge key={idx} variant="secondary" className="flex items-center gap-1">
@@ -878,7 +879,7 @@ export default function Profile() {
                     </div>
                     <div className="flex gap-2">
                       <Input
-                        placeholder="Add language"
+                        placeholder={t("pages:profile.languagePlaceholder")}
                             value={languageInput}
                             onChange={e => setLanguageInput(e.target.value)}
                         onKeyDown={e => {
@@ -941,7 +942,7 @@ export default function Profile() {
                     name="bio"
                     render={({ field }) => (
                       <FormItem className="mt-4">
-                        <FormLabel>About</FormLabel>
+                        <FormLabel>{t("common:fields.about")}</FormLabel>
                         <FormControl>
                           <Textarea {...field} />
                         </FormControl>
@@ -973,7 +974,7 @@ export default function Profile() {
                     className="mt-8 mx-auto block bg-blue-600 hover:bg-blue-700 text-white"
                   disabled={updateProfileMutation.isPending}
                 >
-                  {updateProfileMutation.isPending ? "Saving..." : "Save"}
+                  {updateProfileMutation.isPending ? t("common:buttons.saving") : t("common:buttons.save")}
                 </Button>
               </form>
               </Form>

@@ -74,6 +74,37 @@
       "signingUp": "Signing up..."
     },
     "backLink": "← Back to home"
+  },
+  "notFound": {
+    "title": "404 Page Not Found",
+    "description": "Did you forget to add the page to the router?"
+  },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "Click the edit icon next to a field to change it",
+    "mainPhoto": "Main photo",
+    "additionalPhotos": "Additional photos",
+    "languageEmpty": "Not specified",
+    "languagePlaceholder": "Add language",
+    "loading": "Loading profile...",
+    "error": "Failed to load profile. Try refreshing the page.",
+    "age": {
+      "select": "Select age",
+      "clear": "Clear age",
+      "yearsOld": "{{count}} years old"
+    },
+    "toasts": {
+      "updatedTitle": "Profile updated",
+      "updatedDescription": "Changes saved successfully",
+      "errorTitle": "Error",
+      "errorDescription": "Something went wrong",
+      "avatarTitle": "Avatar updated",
+      "avatarDescription": "Profile photo uploaded successfully",
+      "photosAddedTitle": "Photos added",
+      "photosAddedDescription": "Additional photos uploaded successfully",
+      "photoDeletedTitle": "Photo deleted",
+      "photoDeletedDescription": "Photo deleted successfully"
+    }
   }
 }
 

@@ -26,7 +26,41 @@
     "signUp": "Зарегистрироваться",
     "createRoute": "Создать маршрут",
     "viewRoutes": "Смотреть маршруты",
-    "backHome": "← Назад на главную"
+    "backHome": "← Назад на главную",
+    "save": "Сохранить",
+    "saving": "Сохраняем...",
+    "add": "Добавить",
+    "cancel": "Отменить",
+    "accept": "Принять",
+    "reject": "Отклонить",
+    "send": "Отправить",
+    "attach": "Прикрепить"
+  },
+  "fields": {
+    "name": "Имя",
+    "city": "Город",
+    "gender": "Пол",
+    "age": "Возраст",
+    "phone": "Телефон",
+    "email": "Email",
+    "languages": "Языки",
+    "about": "О себе",
+    "title": "Название",
+    "description": "Описание",
+    "date": "Дата",
+    "time": "Время",
+    "maxParticipants": "Участники",
+    "messengers": "Мессенджеры"
+  },
+  "genderOptions": {
+    "male": "Мужской",
+    "female": "Женский",
+    "other": "Другое"
+  },
+  "placeholders": {
+    "notSpecified": "Не указано",
+    "languageInput": "Добавить язык",
+    "message": "Напиши сообщение..."
   },
   "nav": {
     "routes": "Маршруты",
