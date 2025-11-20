@@ -4,8 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Phone, Mail, MessageCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { enUS, ru as ruLocale } from "date-fns/locale";
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 interface UserProfileModalProps {
   userId: string | null;
@@ -14,6 +15,7 @@ interface UserProfileModalProps {
 }
 
 export function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalProps) {
+  const { t, i18n } = useTranslation(["pages", "common"]);
   const {
     data: user,
     isLoading,
@@ -30,18 +32,20 @@ export function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalPr
   });
 
   const getInitials = (name: string) => name.split(" ").map((n) => n[0]).join("").toUpperCase();
+  const resolvedLanguage = i18n.resolvedLanguage ?? i18n.language ?? "en";
+  const dateFnsLocale = resolvedLanguage.startsWith("ru") ? ruLocale : enUS;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>User profile</DialogTitle>
+          <DialogTitle>{t("pages:userProfileModal.title")}</DialogTitle>
         </DialogHeader>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-10">Loading...</div>
+          <div className="flex items-center justify-center py-10">{t("common:generic.loading")}</div>
         ) : isError || !user ? (
-          <div className="text-center py-10 text-red-500">Failed to load user data</div>
+          <div className="text-center py-10 text-red-500">{t("pages:userProfileModal.loadingError")}</div>
         ) : (
           <div className="space-y-6">
             {/* Main avatar + name */}
@@ -51,19 +55,19 @@ export function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalPr
                 <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
               </Avatar>
               <h2 className="text-xl font-semibold">{user.name}</h2>
-              {user.age && <p className="text-gray-500">{user.age} years old</p>}
+              {user.age && <p className="text-gray-500">{t("pages:userProfileModal.yearsOld", { count: user.age })}</p>}
             </div>
 
             {/* Additional photos */}
             {user.additionalPhotos && user.additionalPhotos.length > 0 && (
               <div>
-                <h3 className="font-medium mb-2">Photos</h3>
+                <h3 className="font-medium mb-2">{t("pages:userProfileModal.photos")}</h3>
                 <div className="grid grid-cols-3 gap-2">
                   {user.additionalPhotos.map((photo: string, idx: number) => (
                     <img
                       key={`${photo}-${idx}`}
                       src={photo}
-                      alt={`Photo ${idx + 1}`}
+                      alt={t("pages:userProfileModal.photoAlt", { index: idx + 1 })}
                       className="w-full h-24 object-cover rounded-md"
                     />
                   ))}
@@ -93,7 +97,7 @@ export function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalPr
               )}
               {user.languages && user.languages.length > 0 && (
                 <div>
-                  <p className="text-sm mb-1 font-medium">Languages:</p>
+                  <p className="text-sm mb-1 font-medium">{t("pages:userProfileModal.languages")}</p>
                   <div className="flex flex-wrap gap-1">
                     {user.languages.map((lang: string, idx: number) => (
                       <Badge key={idx} variant="secondary" className="text-xs">
@@ -105,7 +109,7 @@ export function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalPr
               )}
               {user.messengers && Object.keys(user.messengers).length > 0 && (
                 <div>
-                  <p className="text-sm mb-1 font-medium">Messengers:</p>
+                  <p className="text-sm mb-1 font-medium">{t("pages:userProfileModal.messengers")}</p>
                   <div className="space-y-1">
                     {Object.entries(user.messengers).map(([type, val]: [string, any], idx) => (
                       <div key={idx} className="flex items-center space-x-2 text-sm">
@@ -119,12 +123,16 @@ export function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalPr
               )}
               {user.bio && (
                 <div>
-                  <p className="text-sm mb-1 font-medium">About:</p>
+                  <p className="text-sm mb-1 font-medium">{t("pages:userProfileModal.about")}</p>
                   <p className="text-sm whitespace-pre-line">{user.bio}</p>
                 </div>
               )}
               {user.createdAt && (
-                <p className="text-xs text-gray-500">On service since {format(new Date(user.createdAt), "d MMMM yyyy", { locale: enUS })}</p>
+                <p className="text-xs text-gray-500">
+                  {t("pages:userProfileModal.memberSince", {
+                    date: format(new Date(user.createdAt), "d MMMM yyyy", { locale: dateFnsLocale }),
+                  })}
+                </p>
               )}
             </div>
           </div>

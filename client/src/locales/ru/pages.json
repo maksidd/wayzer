@@ -206,6 +206,20 @@
       "rejectErrorDescription": "Не удалось отклонить запрос"
     }
   },
+  "userProfileModal": {
+    "title": "Профиль пользователя",
+    "loadingError": "Не удалось загрузить данные пользователя",
+    "photos": "Фотографии",
+    "photoAlt": "Фото {{index}}",
+    "languages": "Языки",
+    "messengers": "Мессенджеры",
+    "about": "О себе",
+    "memberSince": "На сервисе с {{date}}",
+    "yearsOld_one": "{{count}} год",
+    "yearsOld_few": "{{count}} года",
+    "yearsOld_many": "{{count}} лет",
+    "yearsOld_other": "{{count}} лет"
+  },
   "trips": {
     "header": {
       "title": "Поиск маршрутов",

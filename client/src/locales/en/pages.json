@@ -206,6 +206,18 @@
       "rejectErrorDescription": "Failed to reject request"
     }
   },
+  "userProfileModal": {
+    "title": "User profile",
+    "loadingError": "Failed to load user data",
+    "photos": "Photos",
+    "photoAlt": "Photo {{index}}",
+    "languages": "Languages",
+    "messengers": "Messengers",
+    "about": "About",
+    "memberSince": "On service since {{date}}",
+    "yearsOld_one": "{{count}} year old",
+    "yearsOld_other": "{{count}} years old"
+  },
   "trips": {
     "header": {
       "title": "Search routes",
