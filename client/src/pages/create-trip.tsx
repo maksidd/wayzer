@@ -732,7 +732,26 @@ export default function CreateTrip() {
                             }}
                             placeholder="Enter city or select from list"
                             autoComplete="off"
+                            className={cityInput ? "pr-10" : undefined}
                           />
+                          {cityInput && (
+                            <button
+                              type="button"
+                              aria-label="Clear city"
+                              className="absolute inset-y-0 right-2 flex items-center text-gray-400 hover:text-gray-700 dark:hover:text-white"
+                              onMouseDown={event => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                              }}
+                              onClick={() => {
+                                setCityInput("");
+                                field.onChange("");
+                                cityInputRef.current?.focus();
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          )}
                           {cityDropdownOpen && cityOptions.length > 0 && (
                             <div className="absolute left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-[10000] max-h-96 overflow-y-auto">
                               {cityOptions.map((city: any) => (
@@ -747,7 +766,7 @@ export default function CreateTrip() {
                                   }}
                                 >
                                   {city.name}
-                  </div>
+                                </div>
                               ))}
                             </div>
                           )}

@@ -699,28 +699,47 @@ export default function Profile() {
                                 field.onChange(e.target.value);
                               }}
                               placeholder="Enter city or select from list"
-                        autoComplete="off"
-                      />
-                      {cityDropdownOpen && cityOptions.length > 0 && (
-                        <div className="absolute left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-[10000] max-h-96 overflow-y-auto">
-                          {cityOptions.map((city: any) => (
-                            <div
-                              key={city.id}
-                              className="px-4 py-2 cursor-pointer hover:bg-accent text-sm"
-                              onMouseDown={() => {
-                                setCityInput(city.name);
-                                        field.onChange(city.name);
-                                setCityDropdownOpen(false);
-                                cityInputRef.current?.blur();
-                              }}
-                            >
-                              {city.name}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                          </FormControl>
+                              autoComplete="off"
+                              className={cityInput ? "pr-10" : undefined}
+                            />
+                            {cityInput && (
+                              <button
+                                type="button"
+                                aria-label="Clear city"
+                                className="absolute inset-y-0 right-2 flex items-center text-gray-400 hover:text-gray-700 dark:hover:text-white"
+                                onMouseDown={event => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                }}
+                                onClick={() => {
+                                  setCityInput("");
+                                  field.onChange("");
+                                  cityInputRef.current?.focus();
+                                }}
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            )}
+                            {cityDropdownOpen && cityOptions.length > 0 && (
+                              <div className="absolute left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-[10000] max-h-96 overflow-y-auto">
+                                {cityOptions.map((city: any) => (
+                                  <div
+                                    key={city.id}
+                                    className="px-4 py-2 cursor-pointer hover:bg-accent text-sm"
+                                    onMouseDown={() => {
+                                      setCityInput(city.name);
+                                      field.onChange(city.name);
+                                      setCityDropdownOpen(false);
+                                      cityInputRef.current?.blur();
+                                    }}
+                                  >
+                                    {city.name}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
