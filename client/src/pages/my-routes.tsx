@@ -18,14 +18,16 @@ import type { TripType } from "@shared/schema";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { enUS, ru as ruLocale } from "date-fns/locale";
 import { UserProfileModal } from "@/components/user-profile-modal";
+import { useTranslation } from "react-i18next";
 
 const LIMIT = 12;
 
 export default function MyRoutes() {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
+  const { t, i18n } = useTranslation(["trips", "common", "pages"]);
   const [searchCity, setSearchCity] = useState("");
   const [selectedType, setSelectedType] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<string | null>("");
@@ -37,6 +39,20 @@ export default function MyRoutes() {
   const cityInputRef = useRef<HTMLInputElement>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const [profileUserId, setProfileUserId] = useState<string | null>(null);
+  const resolvedLanguage = i18n.resolvedLanguage ?? i18n.language ?? "en";
+  const dateFnsLocale = resolvedLanguage.startsWith("ru") ? ruLocale : enUS;
+  const intlLocale = resolvedLanguage.startsWith("ru") ? "ru-RU" : "en-US";
+  const genericAny = t("common:generic.any");
+  const genericAnyDate = t("common:generic.anyDate");
+  const clearCityLabel = t("common:generic.clearCity");
+  const resetLabel = t("trips:buttons.reset");
+  const loadingLabel = t("trips:status.loading");
+  const emptyTitle = t("pages:myRoutes.empty.title");
+  const emptyDescription = t("pages:myRoutes.empty.description");
+  const emptyCta = t("pages:myRoutes.empty.cta");
+  const headerTitle = t("pages:myRoutes.header.title");
+  const headerSubtitle = t("pages:myRoutes.header.subtitle");
+  const organizerLabel = t("common:generic.organizer");
 
   // Extract trip ID from URL if present
   const selectedTripId = location.startsWith('/my-routes/') && location !== '/my-routes' 
@@ -151,7 +167,7 @@ export default function MyRoutes() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+    return new Date(dateString).toLocaleDateString(intlLocale, {
       day: "numeric",
       month: "long",
       year: "numeric",
@@ -204,17 +220,17 @@ export default function MyRoutes() {
           <CardHeader>
             <CardTitle className="flex items-center text-gray-900 dark:text-white">
               <Search className="h-5 w-5 mr-2" />
-              My routes
+              {headerTitle}
             </CardTitle>
             <p className="text-gray-600 dark:text-gray-400">
-              Here are the routes you created as an author
+              {headerSubtitle}
             </p>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  City
+                  {t("trips:filters.cityLabel")}
                 </label>
                 <div className="relative">
                   <Input
@@ -226,14 +242,14 @@ export default function MyRoutes() {
                       setCityInput(e.target.value);
                       setSearchCity(e.target.value);
                     }}
-                    placeholder="Enter city or select from list"
+                    placeholder={t("trips:filters.cityPlaceholder")}
                     autoComplete="off"
                     className={cityInput ? "pr-10" : undefined}
                   />
                   {cityInput && (
                     <button
                       type="button"
-                      aria-label="Clear city"
+                      aria-label={clearCityLabel}
                       className="absolute inset-y-0 right-2 flex items-center text-gray-400 hover:text-gray-700 dark:hover:text-white"
                       onMouseDown={event => {
                         event.preventDefault();
@@ -270,20 +286,20 @@ export default function MyRoutes() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Route type
+                  {t("trips:filters.typeLabel")}
                 </label>
                 <Select value={selectedType} onValueChange={setSelectedType}>
                   <SelectTrigger className="border-gray-300 dark:border-gray-600">
-                    <SelectValue placeholder="Select type" />
+                    <SelectValue placeholder={t("trips:filters.typePlaceholder")} />
                   </SelectTrigger>
                   <TooltipProvider>
                     <SelectContent>
-                      <SelectItem value="all">All types</SelectItem>
+                      <SelectItem value="all">{t("trips:filters.allTypes")}</SelectItem>
                       {tripTypesLoading && (
-                        <div className="px-4 py-2 text-sm text-gray-500">Loading...</div>
+                        <div className="px-4 py-2 text-sm text-gray-500">{t("common:generic.loading")}</div>
                       )}
                       {tripTypesError && (
-                        <div className="px-4 py-2 text-sm text-red-500">Loading error</div>
+                        <div className="px-4 py-2 text-sm text-red-500">{t("common:generic.loadingError")}</div>
                       )}
                       {!tripTypesLoading && !tripTypesError && tripTypes.map((type) => {
                         const Icon = transportIcons[type.id as keyof typeof transportIcons] || Circle;
@@ -309,7 +325,7 @@ export default function MyRoutes() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Date from
+                  {t("trips:filters.dateFromLabel")}
                 </label>
                 <Popover open={dateFromPickerOpen} onOpenChange={setDateFromPickerOpen}>
                   <PopoverTrigger asChild>
@@ -317,11 +333,11 @@ export default function MyRoutes() {
                       type="button"
                       className="w-full h-10 px-3 border border-gray-300 dark:border-gray-600 rounded-md bg-background text-sm text-gray-900 dark:text-white flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                       tabIndex={0}
-                      aria-label="Select date from"
+                      aria-label={t("trips:filters.ariaDateFrom")}
                       onClick={() => setDateFromPickerOpen(true)}
                     >
                       <span className={dateFrom ? "" : "text-black text-sm"}>
-                        {dateFrom ? format(new Date(dateFrom), "d MMMM yyyy", { locale: enUS }) : "Any"}
+                        {dateFrom ? format(new Date(dateFrom), "d MMMM yyyy", { locale: dateFnsLocale }) : genericAny}
                       </span>
                       {dateFrom && (
                         <X
@@ -332,7 +348,7 @@ export default function MyRoutes() {
                             setDateFromPickerOpen(false);
                           }}
                           tabIndex={0}
-                          aria-label="Clear date from"
+                          aria-label={t("trips:filters.clearDateFrom")}
                         />
                       )}
                     </button>
@@ -348,7 +364,7 @@ export default function MyRoutes() {
                           setDateFromPickerOpen(false);
                         }
                       }}
-                      locale={enUS}
+                      locale={dateFnsLocale}
                       className="!gap-1 [&_.rdp-day]:h-6 [&_.rdp-day]:w-6 [&_.rdp-day]:text-xs"
                     />
                   </PopoverContent>
@@ -356,7 +372,7 @@ export default function MyRoutes() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Date to
+                  {t("trips:filters.dateToLabel")}
                 </label>
                 <Popover open={dateToPickerOpen} onOpenChange={setDateToPickerOpen}>
                   <PopoverTrigger asChild>
@@ -364,11 +380,11 @@ export default function MyRoutes() {
                       type="button"
                       className="w-full h-10 px-3 border border-gray-300 dark:border-gray-600 rounded-md bg-background text-sm text-gray-900 dark:text-white flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                       tabIndex={0}
-                      aria-label="Select date to"
+                      aria-label={t("trips:filters.ariaDateTo")}
                       onClick={() => setDateToPickerOpen(true)}
                     >
                       <span className={dateTo ? "" : "text-black text-sm"}>
-                        {dateTo ? format(new Date(dateTo), "d MMMM yyyy", { locale: enUS }) : "Any"}
+                        {dateTo ? format(new Date(dateTo), "d MMMM yyyy", { locale: dateFnsLocale }) : genericAny}
                       </span>
                       {dateTo && (
                         <X
@@ -379,7 +395,7 @@ export default function MyRoutes() {
                             setDateToPickerOpen(false);
                           }}
                           tabIndex={0}
-                          aria-label="Clear date to"
+                          aria-label={t("trips:filters.clearDateTo")}
                         />
                       )}
                     </button>
@@ -395,7 +411,7 @@ export default function MyRoutes() {
                           setDateToPickerOpen(false);
                         }
                       }}
-                      locale={enUS}
+                      locale={dateFnsLocale}
                       className="!gap-1 [&_.rdp-day]:h-6 [&_.rdp-day]:w-6 [&_.rdp-day]:text-xs"
                     />
                   </PopoverContent>
@@ -414,7 +430,7 @@ export default function MyRoutes() {
                   className="w-full"
                 >
                   <Filter className="h-4 w-4 mr-2" />
-                  Reset
+                  {resetLabel}
                 </Button>
               </div>
             </div>
@@ -423,22 +439,22 @@ export default function MyRoutes() {
         {isLoading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600 dark:text-gray-400">Loading routes...</p>
+            <p className="mt-4 text-gray-600 dark:text-gray-400">{loadingLabel}</p>
           </div>
         ) : trips.length === 0 ? (
           <Card className="text-center py-12 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
             <CardContent>
               <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                No routes found
+                {emptyTitle}
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Try changing search parameters or create your own route
+                {emptyDescription}
               </p>
               {user && (
                 <Link href="/create-trip">
                   <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                    Create route
+                    {emptyCta}
                   </Button>
                 </Link>
               )}
@@ -505,7 +521,7 @@ export default function MyRoutes() {
                       )}
                     </div>
                     <div className="flex items-center justify-between text-sm text-gray-500 mt-auto">
-                      <span>{trip.date ? format(new Date(trip.date), "d MMMM yyyy", { locale: enUS }) : "Any date"}</span>
+                      <span>{trip.date ? format(new Date(trip.date), "d MMMM yyyy", { locale: dateFnsLocale }) : genericAnyDate}</span>
                       <span>
                         <Users className="h-4 w-4 inline" /> {trip.participantsCount || 0}/{trip.maxParticipants}
                       </span>
@@ -515,8 +531,8 @@ export default function MyRoutes() {
               );
             })}
             <div ref={loadMoreRef} className="h-8 col-span-full flex items-center justify-center">
-              {isFetchingNextPage && <span className="text-gray-400">Loading...</span>}
-              {!hasNextPage && trips.length > 0 && <span className="text-gray-400">No more routes</span>}
+              {isFetchingNextPage && <span className="text-gray-400">{t("trips:cards.loadingMore")}</span>}
+              {!hasNextPage && trips.length > 0 && <span className="text-gray-400">{t("trips:status.noMoreRoutes")}</span>}
             </div>
           </div>
         }

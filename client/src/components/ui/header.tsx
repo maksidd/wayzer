@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import { queryClient } from "@/lib/queryClient";
 import { useChatWebSocket } from "@/hooks/use-chat-websocket";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 interface HeaderProps {
   user?: {
@@ -38,6 +39,7 @@ export function Header({
   showCreateTrip = true,
   disableCreateTrip = false,
 }: HeaderProps) {
+  const { t } = useTranslation("common");
   // Get conversations2 via useQuery
   const { data: convObj } = useQuery({
     queryKey: ['/api/messages/conversations2'],
@@ -115,7 +117,7 @@ export function Header({
                         href="/admin"
                         className="flex items-center w-full cursor-pointer"
                       >
-                        Admin
+                        {t("nav.admin")}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
@@ -123,7 +125,7 @@ export function Header({
                         href="/tests"
                         className="flex items-center w-full cursor-pointer"
                       >
-                        Tests
+                        {t("nav.tests")}
                       </Link>
                     </DropdownMenuItem>
                   </>
@@ -134,7 +136,7 @@ export function Header({
                     className="flex items-center w-full cursor-pointer"
                     onClick={handleTripsClick}
                   >
-                    Routes
+                    {t("nav.routes")}
                   </Link>
                 </DropdownMenuItem>
 
@@ -143,7 +145,7 @@ export function Header({
                     href="/rules"
                     className="flex items-center w-full cursor-pointer"
                   >
-                    Rules
+                    {t("nav.rules")}
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -154,12 +156,12 @@ export function Header({
                 <>
                   <Link href="/admin">
                     <Button variant="ghost" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
-                      Admin
+                      {t("nav.admin")}
                     </Button>
                   </Link>
                   <Link href="/tests">
                     <Button variant="ghost" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
-                      Tests
+                      {t("nav.tests")}
                     </Button>
                   </Link>
                 </>
@@ -169,7 +171,7 @@ export function Header({
                   variant="ghost"
                   className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
                 >
-                  Routes
+                  {t("nav.routes")}
                 </Button>
               </Link>
 
@@ -178,7 +180,7 @@ export function Header({
                   variant="ghost"
                   className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
                 >
-                  Rules
+                  {t("nav.rules")}
                 </Button>
               </Link>
             </div>
@@ -192,7 +194,7 @@ export function Header({
                   disabled={disableCreateTrip}
                   className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-10 px-4 py-2 hover:bg-blue-700 text-white bg-[#417ee0]"
                 >
-                  Create route
+                  {t("buttons.createRoute")}
                 </Button>
               </Link>
             )}
@@ -226,13 +228,13 @@ export function Header({
                   variant="ghost"
                   className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
                 >
-                  Log in
+                  {t("buttons.logIn")}
                 </Button>
                 <Button
                   onClick={() => onAuthClick?.("register")}
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                  Sign up
+                  {t("buttons.signUp")}
                 </Button>
               </div>
             )}

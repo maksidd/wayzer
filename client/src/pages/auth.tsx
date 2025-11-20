@@ -13,11 +13,13 @@ import { Link } from "wouter";
 import { registerSchema, loginSchema, type RegisterData, type LoginData } from "../../../shared/schema";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 export default function Auth() {
   const [, setLocation] = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation(["pages", "common"]);
   const urlParams = new URLSearchParams(window.location.search);
   const defaultTab = urlParams.get("mode") === "register" ? "register" : "login";
 
@@ -83,8 +85,8 @@ export default function Auth() {
       // Invalidate user cache to update UI
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
       toast({
-        title: "Registration successful",
-        description: "Welcome to Wayzer!",
+        title: t("auth.registrationSuccess.title", { ns: "common" }),
+        description: t("auth.registrationSuccess.description", { ns: "common" }),
       });
 
       // After registration always redirect to profile
@@ -92,8 +94,8 @@ export default function Auth() {
     },
     onError: (error: any) => {
       toast({
-        title: "Registration error",
-        description: error.message || "An error occurred during registration",
+        title: t("auth.registrationError.title", { ns: "common" }),
+        description: error.message || t("auth.registrationError.description", { ns: "common" }),
         variant: "destructive",
       });
     },
@@ -111,7 +113,7 @@ export default function Auth() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || "Invalid email or password");
+        throw new Error(error.message || t("auth.invalidCredentials", { ns: "common" }));
       }
 
       return response.json();
@@ -121,8 +123,8 @@ export default function Auth() {
       // Invalidate user cache to update UI
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
       toast({
-        title: "Login successful",
-        description: "Welcome back!",
+        title: t("auth.loginSuccess.title", { ns: "common" }),
+        description: t("auth.loginSuccess.description", { ns: "common" }),
       });
 
       // Redirect to previous page or home
@@ -132,8 +134,8 @@ export default function Auth() {
     },
     onError: (error: any) => {
       toast({
-        title: "Login error",
-        description: error.message || "Invalid email or password",
+        title: t("auth.loginError.title", { ns: "common" }),
+        description: error.message || t("auth.loginError.description", { ns: "common" }),
         variant: "destructive",
       });
     },
@@ -161,17 +163,17 @@ export default function Auth() {
         <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
           <CardHeader>
             <CardTitle className="text-2xl text-center text-gray-900 dark:text-white">
-              Welcome to Wayzer
+              {t("auth.title", { ns: "pages" })}
             </CardTitle>
             <CardDescription className="text-center text-gray-600 dark:text-gray-300">
-              Log in to your account or create a new one
+              {t("auth.subtitle", { ns: "pages" })}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue={defaultTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Log in</TabsTrigger>
-                <TabsTrigger value="register">Sign up</TabsTrigger>
+                <TabsTrigger value="login">{t("auth.tabs.login", { ns: "pages" })}</TabsTrigger>
+                <TabsTrigger value="register">{t("auth.tabs.register", { ns: "pages" })}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="login" className="space-y-4">
@@ -182,11 +184,12 @@ export default function Auth() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700 dark:text-gray-300">Email</FormLabel>
+                          <FormLabel className="text-gray-700 dark:text-gray-300">{t("auth.form.email", { ns: "pages" })}</FormLabel>
                           <FormControl>
                             <Input
                               type="email"
                               placeholder="example@email.com"
+                              placeholder={t("auth.form.emailPlaceholder", { ns: "pages" })}
                               className="border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
                               {...field}
                             />
@@ -200,7 +203,7 @@ export default function Auth() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700 dark:text-gray-300">Password</FormLabel>
+                          <FormLabel className="text-gray-700 dark:text-gray-300">{t("auth.form.password", { ns: "pages" })}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Input
@@ -236,10 +239,10 @@ export default function Auth() {
                       {loginMutation.isPending ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Logging in...
+                          {t("auth.buttons.loggingIn", { ns: "pages" })}
                         </>
                       ) : (
-                        "Log in"
+                        t("auth.buttons.logIn", { ns: "pages" })
                       )}
                     </Button>
                   </form>
@@ -254,11 +257,13 @@ export default function Auth() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700 dark:text-gray-300">Email</FormLabel>
+                          <FormLabel className="text-gray-700 dark:text-gray-300">{t("auth.form.email", { ns: "pages" })}</FormLabel>
                           <FormControl>
                             <Input
                               type="email"
-                              placeholder="example@email.com"
+                              placeholder={t("auth.form.emailPlaceholder", { ns: "pages" })}
+                              className="border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+                              placeholder={t("auth.form.emailPlaceholder", { ns: "pages" })}
                               className="border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
                               {...field}
                             />
@@ -272,7 +277,7 @@ export default function Auth() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700 dark:text-gray-300">Password</FormLabel>
+                          <FormLabel className="text-gray-700 dark:text-gray-300">{t("auth.form.password", { ns: "pages" })}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Input
@@ -308,10 +313,10 @@ export default function Auth() {
                       {registerMutation.isPending ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Signing up...
+                          {t("auth.buttons.signingUp", { ns: "pages" })}
                         </>
                       ) : (
-                        "Sign up"
+                        t("auth.buttons.signUp", { ns: "pages" })
                       )}
                     </Button>
                   </form>
@@ -323,7 +328,7 @@ export default function Auth() {
 
         <div className="text-center mt-6">
           <Link href="/" className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
-            ← Back to home
+            {t("buttons.backHome", { ns: "common" })}
           </Link>
         </div>
       </div>

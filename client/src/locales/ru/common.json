@@ -20,6 +20,40 @@
     "noMoreRoutes": "Маршруты закончились",
     "toastLogoutTitle": "Выход выполнен",
     "toastLogoutDescription": "До встречи!"
+  },
+  "buttons": {
+    "logIn": "Войти",
+    "signUp": "Зарегистрироваться",
+    "createRoute": "Создать маршрут",
+    "viewRoutes": "Смотреть маршруты",
+    "backHome": "← Назад на главную"
+  },
+  "nav": {
+    "routes": "Маршруты",
+    "rules": "Правила",
+    "admin": "Админ",
+    "tests": "Тесты",
+    "messages": "Сообщения"
+  },
+  "auth": {
+    "loginSuccess": {
+      "title": "Вход выполнен",
+      "description": "Рады видеть тебя снова!"
+    },
+    "loginError": {
+      "title": "Ошибка входа",
+      "description": "Неверный email или пароль"
+    },
+    "registrationSuccess": {
+      "title": "Регистрация прошла успешно",
+      "description": "Добро пожаловать в Wayzer!"
+    },
+    "registrationError": {
+      "title": "Ошибка регистрации",
+      "description": "Что-то пошло не так во время регистрации"
+    },
+    "autoLoginError": "Ошибка автоматического входа",
+    "invalidCredentials": "Неверный email или пароль"
   }
 }
 

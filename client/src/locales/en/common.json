@@ -20,6 +20,40 @@
     "noMoreRoutes": "No more routes",
     "toastLogoutTitle": "Logged out",
     "toastLogoutDescription": "Goodbye!"
+  },
+  "buttons": {
+    "logIn": "Log in",
+    "signUp": "Sign up",
+    "createRoute": "Create route",
+    "viewRoutes": "View routes",
+    "backHome": "← Back to home"
+  },
+  "nav": {
+    "routes": "Routes",
+    "rules": "Rules",
+    "admin": "Admin",
+    "tests": "Tests",
+    "messages": "Messages"
+  },
+  "auth": {
+    "loginSuccess": {
+      "title": "Login successful",
+      "description": "Welcome back!"
+    },
+    "loginError": {
+      "title": "Login error",
+      "description": "Invalid email or password"
+    },
+    "registrationSuccess": {
+      "title": "Registration successful",
+      "description": "Welcome to Wayzer!"
+    },
+    "registrationError": {
+      "title": "Registration error",
+      "description": "An error occurred during registration"
+    },
+    "autoLoginError": "Automatic login error",
+    "invalidCredentials": "Invalid email or password"
   }
 }
 

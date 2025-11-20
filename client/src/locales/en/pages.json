@@ -1,0 +1,79 @@
+{
+  "landing": {
+    "heroTitle": "Wayzer — find travel companions and new friends",
+    "paragraphs": [
+      "When you can’t stay at home anymore and want to go for a walk in the park, have a picnic, attend a concert, or even set off to the sea or mountains—everything is better with like-minded company.",
+      "Here you’ll find people happy to join you on your next unforgettable adventure.",
+      "Create your own route—or join an existing one.",
+      "All events are organized by category: from bike tours to camping, motorcycle trips to festivals."
+    ],
+    "cta": {
+      "createRoute": "Create a route",
+      "viewRoutes": "View routes",
+      "signUp": "Sign up",
+      "logIn": "Log in"
+    },
+    "gallery": {
+      "mountains": "Mountains and travelers",
+      "friends": "Friends outdoors",
+      "city": "City trip",
+      "happy": "Happy company"
+    },
+    "closing": "Wayzer is simple: sign up, fill out your profile, find companions or create your route. New experiences and friends await you!",
+    "footer": "© 2025 Wayzer. Travel together."
+  },
+  "favorites": {
+    "header": {
+      "title": "Favorite routes",
+      "subtitle": "Here are the routes you added to favorites"
+    },
+    "empty": {
+      "title": "No routes found",
+      "description": "Add routes to favorites to see them here",
+      "cta": "Find route"
+    }
+  },
+  "myTrips": {
+    "header": {
+      "title": "My trips",
+      "subtitle": "Here are the routes you joined"
+    },
+    "empty": {
+      "title": "No routes found",
+      "description": "Try changing search parameters or join a new route",
+      "cta": "Find route"
+    }
+  },
+  "myRoutes": {
+    "header": {
+      "title": "My routes",
+      "subtitle": "Here are the routes you created as an author"
+    },
+    "empty": {
+      "title": "No routes found",
+      "description": "Try changing search parameters or create your own route",
+      "cta": "Create route"
+    }
+  },
+  "auth": {
+    "title": "Welcome to Wayzer",
+    "subtitle": "Log in to your account or create a new one",
+    "tabs": {
+      "login": "Log in",
+      "register": "Sign up"
+    },
+    "form": {
+      "email": "Email",
+      "password": "Password",
+      "emailPlaceholder": "example@email.com"
+    },
+    "buttons": {
+      "logIn": "Log in",
+      "signUp": "Sign up",
+      "loggingIn": "Logging in...",
+      "signingUp": "Signing up..."
+    },
+    "backLink": "← Back to home"
+  }
+}
+
