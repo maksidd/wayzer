@@ -105,6 +105,69 @@
       "photoDeletedTitle": "Фото удалено",
       "photoDeletedDescription": "Фото успешно удалено"
     }
+  },
+  "createTrip": {
+    "title": "Создай маршрут",
+    "subtitle": "Расскажи о своей поездке и найди попутчиков",
+    "auth": {
+      "title": "Нужна авторизация",
+      "description": "Войдите, чтобы создать маршрут",
+      "button": "Войти"
+    },
+    "form": {
+      "routeType": "Тип маршрута",
+      "routeTypePlaceholder": "Выбери транспорт",
+      "participants": "Количество участников",
+      "participantsPlaceholder": "Выбери количество участников",
+      "date": "Дата",
+      "time": "Время",
+      "ariaDate": "Выбери дату",
+      "ariaTime": "Выбери время",
+      "clearDate": "Сбросить дату",
+      "clearTime": "Сбросить время",
+      "title": "Название маршрута",
+      "titlePlaceholder": "Например, Уикенд во Львове",
+      "city": "Город",
+      "cityPlaceholder": "Введи город или выбери из списка",
+      "description": "Описание маршрута",
+      "descriptionPlaceholder": "Расскажи о планах, интересах и маршруте...",
+      "routePhotos": "Фото маршрута",
+      "mainPhoto": "Главное фото",
+      "additionalPhotos": "Дополнительные фото",
+      "buildRoute": "Построй маршрут на карте"
+    },
+    "participation": {
+      "label": "Я тоже еду",
+      "description": "Если включено, ты автоматически станешь участником",
+      "genderLabel": "Пол участников",
+      "any": "Любой",
+      "male": "Мужской",
+      "female": "Женский"
+    },
+    "photos": {
+      "mainUploading": "Загружаем...",
+      "additionalUploading": "Загружаем...",
+      "uploadMain": "Главное фото",
+      "uploadAdditional": "Дополнительные фото"
+    },
+    "buttons": {
+      "cancel": "Отменить",
+      "submit": "Создать маршрут",
+      "submitting": "Создаём..."
+    },
+    "toasts": {
+      "successTitle": "Маршрут создан",
+      "successDescription": "Мы опубликовали твой маршрут",
+      "errorTitle": "Ошибка",
+      "errorDescription": "Не удалось создать маршрут",
+      "uploadError": "Не удалось загрузить фото",
+      "sessionExpiredTitle": "Сессия истекла",
+      "sessionExpiredDescription": "Войдите снова",
+      "loginRequiredTitle": "Ошибка",
+      "loginRequiredDescription": "Нужно войти в аккаунт",
+      "invalidDate": "Неверный формат даты",
+      "datePast": "Дата поездки должна быть в будущем"
+    }
   }
 }
 

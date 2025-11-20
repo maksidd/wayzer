@@ -105,6 +105,69 @@
       "photoDeletedTitle": "Photo deleted",
       "photoDeletedDescription": "Photo deleted successfully"
     }
+  },
+  "createTrip": {
+    "title": "Create route",
+    "subtitle": "Tell us about your journey and find travel companions",
+    "auth": {
+      "title": "Authentication required",
+      "description": "Please log in to create a route",
+      "button": "Log in"
+    },
+    "form": {
+      "routeType": "Route type",
+      "routeTypePlaceholder": "Select transport type",
+      "participants": "Number of participants",
+      "participantsPlaceholder": "Select number of participants",
+      "date": "Date",
+      "time": "Time",
+      "ariaDate": "Select date",
+      "ariaTime": "Select time",
+      "clearDate": "Clear date",
+      "clearTime": "Clear time",
+      "title": "Route title",
+      "titlePlaceholder": "e.g., Weekend trip to Lviv",
+      "city": "City",
+      "cityPlaceholder": "Enter city or select from list",
+      "description": "Route description",
+      "descriptionPlaceholder": "Tell us about your plans, interests, route...",
+      "routePhotos": "Route photos",
+      "mainPhoto": "Main photo",
+      "additionalPhotos": "Additional photos",
+      "buildRoute": "Build route on map"
+    },
+    "participation": {
+      "label": "I'm participating in the trip",
+      "description": "If checked, you will be automatically added as a participant",
+      "genderLabel": "Participant gender",
+      "any": "Any",
+      "male": "Male",
+      "female": "Female"
+    },
+    "photos": {
+      "mainUploading": "Uploading...",
+      "additionalUploading": "Uploading...",
+      "uploadMain": "Main photo",
+      "uploadAdditional": "Additional photos"
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "submit": "Create route",
+      "submitting": "Creating..."
+    },
+    "toasts": {
+      "successTitle": "Trip created",
+      "successDescription": "Your trip has been successfully created and published",
+      "errorTitle": "Error",
+      "errorDescription": "Failed to create trip",
+      "uploadError": "Failed to upload photo",
+      "sessionExpiredTitle": "Session expired",
+      "sessionExpiredDescription": "Please log in again",
+      "loginRequiredTitle": "Error",
+      "loginRequiredDescription": "You must be logged in",
+      "invalidDate": "Invalid date format",
+      "datePast": "Trip date must be in the future"
+    }
   }
 }
 

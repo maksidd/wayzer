@@ -24,9 +24,10 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/comp
 import { useRef } from "react";
 import React from "react";
 import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { enUS, ru as ruLocale } from "date-fns/locale";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { useTranslation } from "react-i18next";
 
 const createTripSchema = insertTripSchema.extend({
   location: z.object({
@@ -78,6 +79,13 @@ const transportNames = {
 export default function CreateTrip() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { t, i18n } = useTranslation(["pages", "common", "trips"]);
+  const resolvedLanguage = i18n.resolvedLanguage ?? i18n.language ?? "en";
+  const dateFnsLocale = resolvedLanguage.startsWith("ru") ? ruLocale : enUS;
+  const genericAny = t("common:generic.any");
+  const clearCityLabel = t("common:generic.clearCity");
+  const toastLogoutTitle = t("common:generic.toastLogoutTitle");
+  const toastLogoutDescription = t("common:generic.toastLogoutDescription");
   const [selectedCity, setSelectedCity] = useState<{ lat: number; lng: number }>({ lat: 50.4501, lng: 30.5234 });
   const [mainPhoto, setMainPhoto] = useState<string | null>(null);
   const [additionalPhotos, setAdditionalPhotos] = useState<string[]>([]);
@@ -206,8 +214,8 @@ export default function CreateTrip() {
       setMainPhotoLoading(false);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to upload photo",
+        title: t("pages:createTrip.toasts.errorTitle"),
+        description: error.message || t("pages:createTrip.toasts.uploadError"),
       });
     },
   });
@@ -247,8 +255,8 @@ export default function CreateTrip() {
       setAdditionalPhotosLoading(false);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to upload photo",
+        title: t("pages:createTrip.toasts.errorTitle"),
+        description: error.message || t("pages:createTrip.toasts.uploadError"),
       });
     },
   });
@@ -272,8 +280,8 @@ export default function CreateTrip() {
     },
     onSuccess: () => {
       toast({
-        title: "Trip created",
-        description: "Your trip has been successfully created and published",
+        title: t("pages:createTrip.toasts.successTitle"),
+        description: t("pages:createTrip.toasts.successDescription"),
       });
       queryClient.invalidateQueries({ queryKey: ["/api/trips"] });
       setLocation("/trips");
@@ -287,8 +295,8 @@ export default function CreateTrip() {
         queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
         toast({
           variant: "destructive",
-          title: "Session expired",
-          description: "Please log in again",
+          title: t("pages:createTrip.toasts.sessionExpiredTitle"),
+          description: t("pages:createTrip.toasts.sessionExpiredDescription"),
         });
         setLocation("/auth");
         return;
@@ -296,8 +304,8 @@ export default function CreateTrip() {
       
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to create trip",
+        title: t("pages:createTrip.toasts.errorTitle"),
+        description: error.message || t("pages:createTrip.toasts.errorDescription"),
       });
     },
   });
@@ -306,8 +314,8 @@ export default function CreateTrip() {
     if (!user) {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "You must be logged in",
+        title: t("pages:createTrip.toasts.loginRequiredTitle"),
+        description: t("pages:createTrip.toasts.loginRequiredDescription"),
       });
       return;
     }
@@ -320,24 +328,24 @@ export default function CreateTrip() {
         if (isNaN(selectedDate.getTime())) {
           toast({
             variant: "destructive",
-            title: "Error",
-            description: "Invalid date format",
+            title: t("pages:createTrip.toasts.errorTitle"),
+            description: t("pages:createTrip.toasts.invalidDate"),
           });
           return;
         }
         if (selectedDate <= now) {
           toast({
             variant: "destructive",
-            title: "Error",
-            description: "Trip date must be in the future",
+            title: t("pages:createTrip.toasts.errorTitle"),
+            description: t("pages:createTrip.toasts.datePast"),
           });
           return;
         }
       } catch (error) {
         toast({
           variant: "destructive",
-          title: "Error",
-          description: "Invalid date format",
+          title: t("pages:createTrip.toasts.errorTitle"),
+          description: t("pages:createTrip.toasts.invalidDate"),
         });
         return;
       }
@@ -411,8 +419,8 @@ export default function CreateTrip() {
     localStorage.removeItem("accessToken");
     queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
     toast({
-      title: "Logged out",
-      description: "Goodbye!",
+      title: toastLogoutTitle,
+      description: toastLogoutDescription,
     });
     setLocation("/");
   };
@@ -422,14 +430,14 @@ export default function CreateTrip() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle>Authentication required</CardTitle>
+            <CardTitle>{t("pages:createTrip.auth.title")}</CardTitle>
             <CardDescription>
-              Please log in to create a route
+              {t("pages:createTrip.auth.description")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/auth">
-              <Button className="w-full">Log in</Button>
+              <Button className="w-full">{t("pages:createTrip.auth.button")}</Button>
             </Link>
           </CardContent>
         </Card>
@@ -446,10 +454,10 @@ export default function CreateTrip() {
           <CardHeader>
             <CardTitle className="flex items-center text-gray-900 dark:text-white">
               <MapPin className="h-5 w-5 mr-2" />
-              Create route
+              {t("pages:createTrip.title")}
             </CardTitle>
             <CardDescription>
-              Tell us about your journey and find travel companions
+              {t("pages:createTrip.subtitle")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -462,11 +470,11 @@ export default function CreateTrip() {
                     name="type"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Route type</FormLabel>
+                        <FormLabel>{t("pages:createTrip.form.routeType")}</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select transport type" />
+                              <SelectValue placeholder={t("pages:createTrip.form.routeTypePlaceholder")} />
                             </SelectTrigger>
                           </FormControl>
                           <TooltipProvider>
@@ -504,11 +512,11 @@ export default function CreateTrip() {
                     name="maxParticipants"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Number of participants</FormLabel>
+                        <FormLabel>{t("pages:createTrip.form.participants")}</FormLabel>
                         <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select number of participants" />
+                              <SelectValue placeholder={t("pages:createTrip.form.participantsPlaceholder")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent className="z-[9999]">
@@ -538,18 +546,18 @@ export default function CreateTrip() {
                     )}
                   />
                       <FormItem>
-                        <FormLabel>Date</FormLabel>
+                        <FormLabel>{t("pages:createTrip.form.date")}</FormLabel>
                         <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
                           <PopoverTrigger asChild>
                             <button
                               type="button"
                               className="w-full h-10 px-3 border border-input rounded-md bg-background text-sm text-gray-900 dark:text-white flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                               tabIndex={0}
-                              aria-label="Select date"
+                              aria-label={t("pages:createTrip.form.ariaDate")}
                               onClick={() => setDatePickerOpen(true)}
                             >
                               <span className={date ? "" : "text-black text-sm"}>
-                                {date ? format(new Date(date), "d MMMM yyyy", { locale: enUS }) : "Any"}
+                                {date ? format(new Date(date), "d MMMM yyyy", { locale: dateFnsLocale }) : genericAny}
                               </span>
                               {date && (
                                 <X
@@ -561,7 +569,7 @@ export default function CreateTrip() {
                                     setDatePickerOpen(false);
                                   }}
                                   tabIndex={0}
-                                  aria-label="Clear date"
+                                  aria-label={t("pages:createTrip.form.clearDate")}
                                 />
                               )}
                             </button>
@@ -578,25 +586,25 @@ export default function CreateTrip() {
                                   setDatePickerOpen(false);
                                 }
                               }}
-                              locale={enUS}
+                              locale={dateFnsLocale}
                               className="!gap-1 [&_.rdp-day]:h-6 [&_.rdp-day]:w-6 [&_.rdp-day]:text-xs"
                             />
                           </PopoverContent>
                         </Popover>
                       </FormItem>
                       <FormItem>
-                        <FormLabel>Time</FormLabel>
+                        <FormLabel>{t("pages:createTrip.form.time")}</FormLabel>
                         <Popover open={timePickerOpen} onOpenChange={setTimePickerOpen}>
                           <PopoverTrigger asChild>
                             <button
                               type="button"
                               className="w-full h-10 px-3 border border-input rounded-md bg-background text-sm text-gray-900 dark:text-white flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                               tabIndex={0}
-                              aria-label="Select time"
+                              aria-label={t("pages:createTrip.form.ariaTime")}
                               onClick={() => setTimePickerOpen(true)}
                             >
                               <span className={time ? "" : "text-black text-sm"}>
-                                {time ? `${time}:00` : "Any"}
+                                {time ? `${time}:00` : genericAny}
                               </span>
                               {time && (
                                 <X
@@ -608,7 +616,7 @@ export default function CreateTrip() {
                                     setTimePickerOpen(false);
                                   }}
                                   tabIndex={0}
-                                  aria-label="Clear time"
+                                  aria-label={t("pages:createTrip.form.clearTime")}
                                 />
                               )}
                             </button>
@@ -670,27 +678,27 @@ export default function CreateTrip() {
                         </FormControl>
                         <div className="space-y-1 leading-none">
                           <FormLabel>
-                            I'm participating in the trip
+                            {t("pages:createTrip.participation.label")}
                           </FormLabel>
                           <p className="text-sm text-muted-foreground">
-                            If checked, you will be automatically added as a participant
+                            {t("pages:createTrip.participation.description")}
                           </p>
                         </div>
                       </FormItem>
                     )}
                   />
                   <FormItem className="w-full md:w-1/4 md:ml-auto">
-                    <FormLabel>Participant gender</FormLabel>
+                    <FormLabel>{t("pages:createTrip.participation.genderLabel")}</FormLabel>
                     <Select value={participantGender} onValueChange={v => setParticipantGender(v as 'any' | 'male' | 'female')}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Participant gender" />
+                          <SelectValue placeholder={t("pages:createTrip.participation.genderLabel")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="any">Any</SelectItem>
-                        <SelectItem value="male">Male</SelectItem>
-                        <SelectItem value="female">Female</SelectItem>
+                        <SelectItem value="any">{t("pages:createTrip.participation.any")}</SelectItem>
+                        <SelectItem value="male">{t("pages:createTrip.participation.male")}</SelectItem>
+                        <SelectItem value="female">{t("pages:createTrip.participation.female")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormItem>
@@ -703,10 +711,10 @@ export default function CreateTrip() {
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Route title</FormLabel>
+                        <FormLabel>{t("pages:createTrip.form.title")}</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="e.g., Weekend trip to Lviv"
+                            placeholder={t("pages:createTrip.form.titlePlaceholder")}
                             {...field}
                           />
                         </FormControl>
@@ -719,7 +727,7 @@ export default function CreateTrip() {
                     name="city"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>City</FormLabel>
+                        <FormLabel>{t("pages:createTrip.form.city")}</FormLabel>
                         <div className="relative">
                           <Input
                             ref={cityInputRef}
@@ -730,14 +738,14 @@ export default function CreateTrip() {
                               setCityInput(e.target.value);
                               field.onChange(e.target.value);
                             }}
-                            placeholder="Enter city or select from list"
+                            placeholder={t("pages:createTrip.form.cityPlaceholder")}
                             autoComplete="off"
                             className={cityInput ? "pr-10" : undefined}
                           />
                           {cityInput && (
                             <button
                               type="button"
-                              aria-label="Clear city"
+                              aria-label={clearCityLabel}
                               className="absolute inset-y-0 right-2 flex items-center text-gray-400 hover:text-gray-700 dark:hover:text-white"
                               onMouseDown={event => {
                                 event.preventDefault();
@@ -783,10 +791,10 @@ export default function CreateTrip() {
                   name="description"
                   render={({ field }) => (
                     <FormItem className="md:col-span-2">
-                      <FormLabel>Route description</FormLabel>
+                      <FormLabel>{t("pages:createTrip.form.description")}</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Tell us about your plans, interests, route..."
+                          placeholder={t("pages:createTrip.form.descriptionPlaceholder")}
                           className="min-h-[120px]"
                           {...field}
                           value={field.value ?? ''}
@@ -800,7 +808,7 @@ export default function CreateTrip() {
                 {/* Route map */}
                 <div className="md:col-span-2">
                   <FormLabel className="text-base font-medium mb-4 block">
-                    Build route on map
+                    {t("pages:createTrip.form.buildRoute")}
                   </FormLabel>
                   <div className="mb-4">
                     <RouteMap
@@ -814,11 +822,11 @@ export default function CreateTrip() {
 
                 {/* Photo Upload Section */}
                 <div className="space-y-4">
-                  <FormLabel className="text-base font-medium">Route photos</FormLabel>
+                  <FormLabel className="text-base font-medium">{t("pages:createTrip.form.routePhotos")}</FormLabel>
                   <div className="flex flex-col md:flex-row gap-4">
                     {/* Main Photo */}
                     <div className="w-full md:w-1/3">
-                      <FormLabel className="text-sm text-gray-600 dark:text-gray-400">Main photo</FormLabel>
+                      <FormLabel className="text-sm text-gray-600 dark:text-gray-400">{t("pages:createTrip.form.mainPhoto")}</FormLabel>
                       <div className="mt-2">
                         {mainPhoto ? (
                           <div className="relative">
@@ -859,7 +867,7 @@ export default function CreateTrip() {
                                 <Plus className="h-6 w-6 mb-2" />
                               )}
                               <span className="text-sm">
-                                {mainPhotoLoading ? "Uploading..." : "Main photo"}
+                                {mainPhotoLoading ? t("pages:createTrip.photos.mainUploading") : t("pages:createTrip.form.mainPhoto")}
                               </span>
                             </Button>
                           </div>
@@ -868,7 +876,7 @@ export default function CreateTrip() {
                     </div>
                     {/* Additional Photos */}
                     <div className="w-full md:w-2/3">
-                      <FormLabel className="text-sm text-gray-600 dark:text-gray-400">Additional photos</FormLabel>
+                      <FormLabel className="text-sm text-gray-600 dark:text-gray-400">{t("pages:createTrip.form.additionalPhotos")}</FormLabel>
                       <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
                         {additionalPhotos.map((photo, index) => (
                           <div key={index} className="relative">
@@ -910,7 +918,7 @@ export default function CreateTrip() {
                               <Plus className="h-4 w-4 mb-1" />
                             )}
                             <span className="text-sm">
-                              {additionalPhotosLoading ? "Uploading..." : "Additional photos"}
+                              {additionalPhotosLoading ? t("pages:createTrip.photos.additionalUploading") : t("pages:createTrip.form.additionalPhotos")}
                             </span>
                           </Button>
                         </div>
@@ -924,7 +932,7 @@ export default function CreateTrip() {
                 <div className="flex justify-end space-x-4 mt-8">
                   <Link href="/trips">
                     <Button type="button" variant="outline">
-                      Cancel
+                      {t("pages:createTrip.buttons.cancel")}
                     </Button>
                   </Link>
                   <Button 
@@ -935,12 +943,12 @@ export default function CreateTrip() {
                     {createTripMutation.isPending ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Creating...
+                        {t("pages:createTrip.buttons.submitting")}
                       </>
                     ) : (
                       <>
                         <MapPin className="h-4 w-4 mr-2" />
-                        Create route
+                        {t("pages:createTrip.buttons.submit")}
                       </>
                     )}
                   </Button>
