@@ -1,0 +1,4 @@
+ALTER TABLE trip_types
+  DROP COLUMN IF EXISTS name,
+  DROP COLUMN IF EXISTS description;
+

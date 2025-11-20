@@ -15,15 +15,26 @@ export const db = drizzle({ client: pool, schema });
 // Function to seed trip types
 export async function seedTripTypes() {
   await db.insert(schema.tripTypes).values([
-    { id: 'car', name: 'Car' },
-    { id: 'plane', name: 'Plane' },
-    { id: 'bike', name: 'Bicycle' },
-    { id: 'walk', name: 'Walk' },
-    { id: 'scooter', name: 'Scooter' },
-    { id: 'monowheel', name: 'Monowheel' },
-    { id: 'sea', name: 'Sea' },
-    { id: 'mountains', name: 'Mountains' },
-    { id: 'sights', name: 'Sights' },
+    { id: "walk", ordering: 10 },
+    { id: "bike", ordering: 20 },
+    { id: "car", ordering: 30 },
+    { id: "scooter", ordering: 40 },
+    { id: "monowheel", ordering: 50 },
+    { id: "motorcycle", ordering: 60 },
+    { id: "public_transport", ordering: 70 },
+    { id: "train", ordering: 80 },
+    { id: "plane", ordering: 90 },
+    { id: "boat", ordering: 100 },
+    { id: "sea", ordering: 110 },
+    { id: "mountains", ordering: 120 },
+    { id: "sights", ordering: 130 },
+    { id: "fest", ordering: 140 },
+    { id: "picnic", ordering: 150 },
+    { id: "camping", ordering: 160 },
+    { id: "party", ordering: 170 },
+    { id: "retreat", ordering: 180 },
+    { id: "pets", ordering: 190 },
+    { id: "other", ordering: 999 },
   ]).onConflictDoNothing();
 }
 

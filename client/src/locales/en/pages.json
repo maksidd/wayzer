@@ -236,6 +236,88 @@
       "clearDateFrom": "Clear date from",
       "clearDateTo": "Clear date to"
     },
+    "routeTypes": {
+      "car": {
+        "name": "Car trip",
+        "description": "Road adventures by car or car sharing"
+      },
+      "plane": {
+        "name": "Flight",
+        "description": "Trips that start with a flight"
+      },
+      "bike": {
+        "name": "Bike ride",
+        "description": "Cycling routes and bikepacking"
+      },
+      "walk": {
+        "name": "Walking tour",
+        "description": "City walks, hikes and urban explorations"
+      },
+      "scooter": {
+        "name": "Scooter ride",
+        "description": "Routes for electric or classic scooters"
+      },
+      "monowheel": {
+        "name": "Monowheel ride",
+        "description": "Trips on personal electric transport"
+      },
+      "motorcycle": {
+        "name": "Motorcycle trip",
+        "description": "Weekend rides and long moto tours"
+      },
+      "public_transport": {
+        "name": "Public transport",
+        "description": "Trips built around trains, buses or metro"
+      },
+      "train": {
+        "name": "Train ride",
+        "description": "Railway journeys and weekend getaways"
+      },
+      "boat": {
+        "name": "Boat trip",
+        "description": "Water journeys by boat, yacht or SUP"
+      },
+      "sea": {
+        "name": "Sea trip",
+        "description": "Everything related to the sea or ocean"
+      },
+      "mountains": {
+        "name": "Mountain adventure",
+        "description": "Hikes, trekking and climbing in mountains"
+      },
+      "sights": {
+        "name": "Sightseeing",
+        "description": "City tours, architecture or museums"
+      },
+      "fest": {
+        "name": "Festival",
+        "description": "Concerts, festivals and large events"
+      },
+      "picnic": {
+        "name": "Picnic",
+        "description": "Outdoor chill with snacks and friends"
+      },
+      "camping": {
+        "name": "Camping",
+        "description": "Weekend camping, glamping or bivouac"
+      },
+      "party": {
+        "name": "Party",
+        "description": "House parties or themed gatherings"
+      },
+      "retreat": {
+        "name": "Retreat",
+        "description": "Yoga, wellness or mindfulness trips"
+      },
+      "pets": {
+        "name": "Pet-friendly",
+        "description": "Trips where pets are welcome"
+      },
+      "other": {
+        "name": "Other format",
+        "description": "Anything that doesn't fit the rest"
+      }
+    },
     "status": {
       "loading": "Loading trips...",
       "noRoutesTitle": "No routes found",

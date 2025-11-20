@@ -605,25 +605,38 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select({
         id: tripTypes.id,
-        name: tripTypes.name,
         ordering: tripTypes.ordering,
-        description: tripTypes.description,
       })
-      .from(tripTypes);
+      .from(tripTypes)
+      .orderBy(asc(tripTypes.ordering), asc(tripTypes.id));
   }
 
   async initializeTripTypes(): Promise<void> {
     const existingTypes = await this.getTripTypes();
     if (existingTypes.length === 0) {
-      await db.insert(tripTypes).values([
-        { id: "walk", name: "Walk" },
-        { id: "bike", name: "Bicycle" },
-        { id: "car", name: "Car" },
-        { id: "public_transport", name: "Public Transport" },
-        { id: "boat", name: "Boat" },
-        { id: "train", name: "Train" },
-        { id: "plane", name: "Plane" },
-      ]);
+      const defaultTypes: { id: string; ordering: number }[] = [
+        { id: "walk", ordering: 10 },
+        { id: "bike", ordering: 20 },
+        { id: "car", ordering: 30 },
+        { id: "scooter", ordering: 40 },
+        { id: "monowheel", ordering: 50 },
+        { id: "motorcycle", ordering: 60 },
+        { id: "public_transport", ordering: 70 },
+        { id: "train", ordering: 80 },
+        { id: "plane", ordering: 90 },
+        { id: "boat", ordering: 100 },
+        { id: "sea", ordering: 110 },
+        { id: "mountains", ordering: 120 },
+        { id: "sights", ordering: 130 },
+        { id: "fest", ordering: 140 },
+        { id: "picnic", ordering: 150 },
+        { id: "camping", ordering: 160 },
+        { id: "party", ordering: 170 },
+        { id: "retreat", ordering: 180 },
+        { id: "pets", ordering: 190 },
+        { id: "other", ordering: 999 },
+      ];
+      await db.insert(tripTypes).values(defaultTypes);
     }
   }
 

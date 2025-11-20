@@ -83,10 +83,9 @@ GET /trip-types
 **Response:**
 ```json
 [
-  { "id": "walk", "name": "Walk" },
-  { "id": "bike", "name": "Bicycle" },
-  { "id": "car", "name": "Car" },
-  { "id": "public_transport", "name": "Public Transport" }
+  { "id": "walk", "ordering": 10 },
+  { "id": "bike", "ordering": 20 },
+  { "id": "car", "ordering": 30 }
 ]
 ```
 

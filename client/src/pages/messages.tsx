@@ -12,47 +12,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import type { ChatConversation, MessageWithUsers } from "@shared/schema";
 import { TripCard } from "@/components/trip-card";
-import { MapPin, Users, User, Circle, Car, Plane, Bike, PersonStanding, Ship, Mountain, Landmark, Wind, Utensils, TreePine, PartyPopper, Flower2, Squirrel } from "lucide-react";
+import { MapPin, Users, User } from "lucide-react";
 import React from "react";
 import { enUS, ru as ruLocale } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 import { TripDetailModal } from "@/components/trip-detail-modal";
 import { ConversationItem } from "@/components/conversation-item";
 import { UserProfileModal } from "@/components/user-profile-modal";
-
-// transportIcons and transportNames from trips.tsx:
-const transportIcons: Record<string, any> = {
-  car: Car,
-  plane: Plane,
-  bike: Bike,
-  walk: PersonStanding,
-  scooter: Bike,
-  monowheel: Circle,
-  motorcycle: Wind,
-  sea: Ship,
-  mountains: Mountain,
-  sights: Landmark,
-  fest: Users,
-  picnic: Utensils,
-  camping: TreePine,
-  party: PartyPopper,
-  retreat: Flower2,
-  pets: Squirrel,
-  other: Circle,
-};
-const transportNames = {
-  car: "Car",
-  plane: "Plane",
-  bike: "Bicycle",
-  walk: "Walk",
-  scooter: "Scooter",
-  monowheel: "Monowheel",
-  motorcycle: "Motorcycle",
-  sea: "Sea",
-  mountains: "Mountains",
-  sights: "Sights",
-  other: "Other",
-} as const;
+import { getRouteTypeIcon, resolveRouteTypeName } from "@/lib/routeTypes";
 const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase();
 
 export default function Messages() {
@@ -241,14 +208,6 @@ export default function Messages() {
     });
     return map;
   }, [uniqueTripIds, tripQueries]);
-  const { data: tripTypes = [] } = useQuery({
-    queryKey: ["/api/trip-types"],
-    queryFn: async () => {
-      const resp = await fetch("/api/trip-types");
-      if (!resp.ok) return [];
-      return resp.json();
-    },
-  });
   const { data: favoriteTrips = [] } = useQuery({
     queryKey: ["/api/favorites", user?.id],
     enabled: !!user,
@@ -784,9 +743,8 @@ export default function Messages() {
                           if (message.type === 'request' && message.tripId) {
                             const trip = tripMap[message.tripId];
                             if (trip) {
-                              const typeObj = tripTypes.find((t: any) => t.id === trip.type);
-                              const TypeIcon = (typeObj && transportIcons[typeObj.id as keyof typeof transportIcons]) || transportIcons[trip.type as keyof typeof transportIcons] || Circle;
-                              const typeName = typeObj?.name || transportNames[trip.type as keyof typeof transportNames] || trip.type;
+                              const TypeIcon = getRouteTypeIcon(trip.type);
+                              const typeName = resolveRouteTypeName(trip.type, t, i18n);
                               const isFavorite = favoriteTrips?.some((f: any) => (f.id ?? f) === trip.id);
                               return (
                                 <React.Fragment key={message.id + "-trip"}>

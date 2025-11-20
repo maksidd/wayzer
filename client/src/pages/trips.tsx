@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, Users, User, Search, Filter, Car, Plane, Train, Bike, PersonStanding, Ship, Plus, Heart, Zap, Mountain, Landmark, Circle, CircleDot, Wind, Utensils, TreePine, PartyPopper, Flower2, Squirrel, X } from "lucide-react";
+import { MapPin, Users, User, Search, Filter, X } from "lucide-react";
 import { Header } from "@/components/ui/header";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -22,40 +22,11 @@ import { format } from "date-fns";
 import { enUS, ru as ruLocale } from "date-fns/locale";
 import { UserProfileModal } from "@/components/user-profile-modal";
 import { useTranslation } from "react-i18next";
-
-const transportIcons: Record<string, any> = {
-  car: Car,
-  plane: Plane,
-  bike: Bike,
-  walk: PersonStanding,
-  scooter: Bike,             // Scooter — bicycle (visually similar)
-  monowheel: CircleDot,      // Monowheel — circle with dot
-  motorcycle: Wind,          // Motorcycle — wind
-  sea: Ship,
-  mountains: Mountain,
-  sights: Landmark,
-  fest: Users,               // Festival — crowd
-  picnic: Utensils,          // Picnic — utensils
-  camping: TreePine,         // Camping — pine tree
-  party: PartyPopper,        // Party — party popper
-  retreat: Flower2,          // Retreat — flower
-  pets: Squirrel,            // Pets — full-height squirrel
-  other: Circle,
-};
-
-const transportNames = {
-  car: "Car",
-  plane: "Plane", 
-  bike: "Bicycle",
-  walk: "Walk",
-  scooter: "Scooter",
-  monowheel: "Monowheel",
-  motorcycle: "Motorcycle",
-  sea: "Sea",
-  mountains: "Mountains",
-  sights: "Sights",
-  other: "Other",
-} as const;
+import {
+  getRouteTypeIcon,
+  resolveRouteTypeDescription,
+  resolveRouteTypeName,
+} from "@/lib/routeTypes";
 
 const LIMIT = 40;
 
@@ -183,6 +154,18 @@ export default function Trips() {
       return resp.json();
     },
   });
+
+  const sortedTripTypes = useMemo(
+    () =>
+      [...tripTypes].sort((a, b) => {
+        const orderDiff = (a.ordering ?? 0) - (b.ordering ?? 0);
+        if (orderDiff !== 0) {
+          return orderDiff;
+        }
+        return a.id.localeCompare(b.id);
+      }),
+    [tripTypes],
+  );
 
   // Favorite trips list (for displaying active heart)
   const { data: favoriteTrips = [] } = useQuery<any[]>({
@@ -328,20 +311,23 @@ export default function Trips() {
                       {tripTypesError && (
                         <div className="px-4 py-2 text-sm text-red-500">{t("common:generic.loadingError")}</div>
                       )}
-                      {!tripTypesLoading && !tripTypesError && tripTypes.map((type) => {
-                        const Icon = transportIcons[type.id as keyof typeof transportIcons] || Circle;
+                      {!tripTypesLoading && !tripTypesError && sortedTripTypes.map((type) => {
+                        const alias = type.id;
+                        const Icon = getRouteTypeIcon(alias);
+                        const localizedName = resolveRouteTypeName(alias, t, i18n);
+                        const localizedDescription = resolveRouteTypeDescription(alias, t, i18n);
                         return (
-                          <Tooltip key={type.id}>
+                          <Tooltip key={alias}>
                             <TooltipTrigger asChild>
-                              <SelectItem value={type.id}>
+                              <SelectItem value={alias}>
                                 <div className="flex items-center space-x-2">
                                   <Icon className="h-4 w-4" />
-                                  <span>{type.name}</span>
+                                  <span>{localizedName}</span>
                                 </div>
                               </SelectItem>
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs break-words" side="right" align="center">
-                              {type.description || type.name}
+                              {localizedDescription}
                             </TooltipContent>
                           </Tooltip>
                         );
@@ -496,9 +482,9 @@ export default function Trips() {
               const isFavorite = favoriteTrips?.some((f: any) => (f.id ?? f) === trip.id);
 
               // Get route type from tripTypes
-              const typeObj = tripTypes.find((t: TripType) => t.id === trip.type);
-              const TypeIcon = (typeObj && transportIcons[typeObj.id as keyof typeof transportIcons]) || transportIcons[trip.type as keyof typeof transportIcons] || Circle;
-              const typeName = typeObj?.name || transportNames[trip.type as keyof typeof transportNames] || trip.type;
+              const typeAlias = trip.type;
+              const TypeIcon = getRouteTypeIcon(typeAlias);
+              const typeName = resolveRouteTypeName(typeAlias, t, i18n);
 
               return (
                 <Card

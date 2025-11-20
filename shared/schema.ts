@@ -52,9 +52,7 @@ export const users = pgTable("users", {
 // Trip types table
 export const tripTypes = pgTable("trip_types", {
   id: text("id").primaryKey(),
-  name: text("name").notNull(),
   ordering: integer("ordering").default(0),
-  description: text("description").default(""),
 });
 
 // Trips table

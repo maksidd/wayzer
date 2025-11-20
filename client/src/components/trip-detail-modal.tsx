@@ -7,17 +7,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  MapPin, 
-  Users, 
-  Calendar, 
-  Car, 
-  Plane, 
-  Train, 
-  Bike, 
-  PersonStanding, 
-  Ship, 
-  Phone, 
+import {
+  MapPin,
+  Users,
+  Calendar,
+  Phone,
   Mail,
   MessageCircle,
   X,
@@ -34,26 +28,7 @@ import { UserProfileModal } from "@/components/user-profile-modal";
 import { format } from "date-fns";
 import { enUS, ru as ruLocale } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
-
-const transportIcons = {
-  car: Car,
-  plane: Plane,
-  train: Train,
-  bike: Bike,
-  walk: PersonStanding,
-  boat: Ship,
-  public_transport: Train,
-} as const;
-
-const transportNames = {
-  car: "Car",
-  plane: "Plane", 
-  train: "Train",
-  bike: "Bicycle",
-  walk: "Walk",
-  boat: "Boat",
-  public_transport: "Public Transport",
-} as const;
+import { getRouteTypeIcon, resolveRouteTypeName } from "@/lib/routeTypes";
 
 interface TripDetailModalProps {
   tripId: string;
@@ -256,7 +231,8 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
   }
 
   // Only after trip is guaranteed to be defined
-  const TransportIcon = transportIcons[trip.type as keyof typeof transportIcons] || Car;
+  const TransportIcon = getRouteTypeIcon(trip.type);
+  const routeTypeLabel = resolveRouteTypeName(trip.type, t, i18n);
 
   // Check user status
   const isCreator = user && trip.creatorId === user.id;
@@ -379,9 +355,7 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
                   <div className="absolute top-3 left-3 z-10">
                     <Badge variant="secondary" className="flex items-center space-x-1 bg-white/90 backdrop-blur-sm">
                       <TransportIcon className="h-3 w-3" />
-                      <span className="text-xs">
-                        {transportNames[trip.type as keyof typeof transportNames] || trip.type}
-                      </span>
+                      <span className="text-xs">{routeTypeLabel}</span>
                     </Badge>
                   </div>
                   {/* Favorite button */}

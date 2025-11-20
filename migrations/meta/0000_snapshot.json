@@ -679,11 +679,12 @@
           "primaryKey": true,
           "notNull": true
         },
-        "name": {
-          "name": "name",
-          "type": "text",
+        "ordering": {
+          "name": "ordering",
+          "type": "integer",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false,
+          "default": "0"
         }
       },
       "indexes": {},

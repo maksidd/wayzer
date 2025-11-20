@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, Users, User, Search, Circle, Filter, X, Car, Plane, Train, Bike, PersonStanding, Ship, Wind, Utensils, TreePine, PartyPopper, Flower2, Squirrel, Mountain, Landmark, CircleDot } from "lucide-react";
+import { MapPin, Users, User, Search, Filter, X } from "lucide-react";
 import { Header } from "@/components/ui/header";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +21,11 @@ import { format } from "date-fns";
 import { enUS, ru as ruLocale } from "date-fns/locale";
 import { UserProfileModal } from "@/components/user-profile-modal";
 import { useTranslation } from "react-i18next";
+import {
+  getRouteTypeIcon,
+  resolveRouteTypeDescription,
+  resolveRouteTypeName,
+} from "@/lib/routeTypes";
 
 export default function MyTrips() {
   const [location, setLocation] = useLocation();
@@ -153,25 +158,17 @@ export default function MyTrips() {
     setSelectedTripId(null);
   };
 
-  const transportIcons: Record<string, any> = {
-    car: Car,
-    plane: Plane,
-    bike: Bike,
-    walk: PersonStanding,
-    scooter: Bike,
-    monowheel: CircleDot,
-    motorcycle: Wind,
-    sea: Ship,
-    mountains: Mountain,
-    sights: Landmark,
-    fest: Users,
-    picnic: Utensils,
-    camping: TreePine,
-    party: PartyPopper,
-    retreat: Flower2,
-    pets: Squirrel,
-    other: Circle,
-  };
+  const sortedTripTypes = useMemo(
+    () =>
+      [...tripTypes].sort((a, b) => {
+        const diff = (a.ordering ?? 0) - (b.ordering ?? 0);
+        if (diff !== 0) {
+          return diff;
+        }
+        return a.id.localeCompare(b.id);
+      }),
+    [tripTypes],
+  );
 
   const filteredTrips = trips.filter((trip: any) => {
     if (searchCity && !trip.city?.toLowerCase().includes(searchCity.toLowerCase())) return false;
@@ -271,20 +268,22 @@ export default function MyTrips() {
                       {tripTypesError && (
                         <div className="px-4 py-2 text-sm text-red-500">{t("common:generic.loadingError")}</div>
                       )}
-                      {!tripTypesLoading && !tripTypesError && tripTypes.map((type) => {
-                        const Icon = transportIcons[type.id as keyof typeof transportIcons] || Circle;
+                      {!tripTypesLoading && !tripTypesError && sortedTripTypes.map((type) => {
+                        const Icon = getRouteTypeIcon(type.id);
+                        const localizedName = resolveRouteTypeName(type.id, t, i18n);
+                        const localizedDescription = resolveRouteTypeDescription(type.id, t, i18n);
                         return (
                           <Tooltip key={type.id}>
                             <TooltipTrigger asChild>
                               <SelectItem value={type.id}>
                                 <div className="flex items-center space-x-2">
                                   <Icon className="h-4 w-4" />
-                                  <span>{type.name}</span>
+                                  <span>{localizedName}</span>
                                 </div>
                               </SelectItem>
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs break-words" side="right" align="center">
-                              {type.description || type.name}
+                              {localizedDescription}
                             </TooltipContent>
                           </Tooltip>
                         );
@@ -434,9 +433,8 @@ export default function MyTrips() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredTrips.map((trip: any) => {
               const isFavorite = favoriteTrips?.some((f: any) => (f.id ?? f) === trip.id);
-              const typeObj = tripTypes.find((t: TripType) => t.id === trip.type);
-              const TypeIcon = Circle;
-              const typeName = typeObj?.name || trip.type;
+              const TypeIcon = getRouteTypeIcon(trip.type);
+              const typeName = resolveRouteTypeName(trip.type, t, i18n);
               return (
                 <Card
                   key={trip.id}

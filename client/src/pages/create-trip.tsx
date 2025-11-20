@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,9 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Checkbox } from "@/components/ui/checkbox";
 import { Header } from "@/components/ui/header";
 import { RouteMap } from "@/components/route-map";
-import {
-  Car, Plane, Bike, PersonStanding, Zap, Mountain, Landmark, Ship, Circle, CircleDot, PartyPopper, Utensils, Backpack, Sparkles, MapPin, Camera, Plus, TreePine, Wind, Flower2, Dog, X, Users, Squirrel
-} from "lucide-react";
+import { MapPin, Plus, X } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -28,6 +26,11 @@ import { enUS, ru as ruLocale } from "date-fns/locale";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useTranslation } from "react-i18next";
+import {
+  getRouteTypeIcon,
+  resolveRouteTypeDescription,
+  resolveRouteTypeName,
+} from "@/lib/routeTypes";
 
 const createTripSchema = insertTripSchema.extend({
   location: z.object({
@@ -41,40 +44,6 @@ const createTripSchema = insertTripSchema.extend({
 });
 
 type CreateTripData = z.infer<typeof createTripSchema>;
-
-// Icon map by id
-const transportIcons: Record<string, any> = {
-  car: Car,
-  plane: Plane,
-  bike: Bike,
-  walk: PersonStanding,
-  scooter: Bike,             // Scooter — bicycle (visually similar)
-  monowheel: CircleDot,      // Monowheel — circle with dot
-  motorcycle: Wind,          // Motorcycle — wind
-  sea: Ship,
-  mountains: Mountain,
-  sights: Landmark,
-  fest: Users,               // Festival — crowd
-  picnic: Utensils,          // Picnic — utensils
-  camping: TreePine,         // Camping — pine tree
-  party: PartyPopper,        // Party — party popper
-  retreat: Flower2,          // Retreat — flower
-  pets: Squirrel,            // Pets — full-height squirrel
-};
-
-const transportNames = {
-  car: "Car",
-  plane: "Plane", 
-  bike: "Bicycle",
-  walk: "Walk",
-  scooter: "Scooter",
-  monowheel: "Monowheel",
-  motorcycle: "Motorcycle",
-  sea: "Sea",
-  mountains: "Mountains",
-  sights: "Sights",
-  other: "Other",
-} as const;
 
 export default function CreateTrip() {
   const [, setLocation] = useLocation();
@@ -157,6 +126,18 @@ export default function CreateTrip() {
       return resp.json();
     },
   });
+
+  const sortedTripTypes = useMemo(
+    () =>
+      [...tripTypes].sort((a: TripType, b: TripType) => {
+        const diff = (a.ordering ?? 0) - (b.ordering ?? 0);
+        if (diff !== 0) {
+          return diff;
+        }
+        return a.id.localeCompare(b.id);
+      }),
+    [tripTypes],
+  );
 
   // Get cities with filtering
   const { data: cityOptions = [], isLoading: citiesLoading } = useQuery({
@@ -479,27 +460,26 @@ export default function CreateTrip() {
                           </FormControl>
                           <TooltipProvider>
                             <SelectContent className="z-[9999]">
-                              {tripTypes
-                                .slice()
-                                .sort((a: TripType, b: TripType) => (a.ordering ?? 0) - (b.ordering ?? 0))
-                                .map((type: any) => {
-                                  const Icon = transportIcons[type.id] || Circle;
-                                  return (
-                                    <Tooltip key={type.id}>
-                                      <TooltipTrigger asChild>
-                                        <SelectItem value={type.id}>
-                                          <div className="flex items-center space-x-2">
-                                            <Icon className="h-4 w-4" />
-                                            <span>{type.name}</span>
-                                          </div>
-                                        </SelectItem>
-                                      </TooltipTrigger>
-                                      <TooltipContent style={{ zIndex: 99999 }} className="max-w-xs break-words" side="right" align="center">
-                                        {type.description || type.name}
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  );
-                                })}
+                              {sortedTripTypes.map((type: TripType) => {
+                                const Icon = getRouteTypeIcon(type.id);
+                                const localizedName = resolveRouteTypeName(type.id, t, i18n);
+                                const localizedDescription = resolveRouteTypeDescription(type.id, t, i18n);
+                                return (
+                                  <Tooltip key={type.id}>
+                                    <TooltipTrigger asChild>
+                                      <SelectItem value={type.id}>
+                                        <div className="flex items-center space-x-2">
+                                          <Icon className="h-4 w-4" />
+                                          <span>{localizedName}</span>
+                                        </div>
+                                      </SelectItem>
+                                    </TooltipTrigger>
+                                    <TooltipContent style={{ zIndex: 99999 }} className="max-w-xs break-words" side="right" align="center">
+                                      {localizedDescription}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                );
+                              })}
                             </SelectContent>
                           </TooltipProvider>
                         </Select>

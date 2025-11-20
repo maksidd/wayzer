@@ -200,10 +200,11 @@ async function createTrip(token, city, tripType, mainPhotoUrl) {
   const randomLng = () => 22 + Math.random() * 18; // 22-40
   const route = Array.from({ length: 5 }, () => ({ lat: randomLat(), lng: randomLng() }));
   const dateTime = randomDate();
+  const tripTypeId = tripType?.id ?? tripType?.slug ?? tripType?.type ?? tripType;
   const data = {
     title: randomTitle(),
     description: randomDescription(),
-    type: tripType.id || tripType.slug || tripType.type || tripType,
+    type: tripTypeId,
     city: city.name,
     location: route[0],
     route,
@@ -352,7 +353,12 @@ async function run() {
     if (!Array.isArray(res.data)) throw new Error('Response is not an array');
   });
   await test('Filter trips by type', async () => {
-    const type = randomFrom(tripTypes).slug || randomFrom(tripTypes).type;
+    const selectedType = randomFrom(tripTypes);
+    const type =
+      selectedType?.id ??
+      selectedType?.slug ??
+      selectedType?.type ??
+      selectedType;
     const res = await makeRequest('GET', `/api/trips?type=${type}`);
     if (res.status !== 200) throw new Error('Filtering does not work');
   });
