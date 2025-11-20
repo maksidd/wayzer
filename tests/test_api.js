@@ -180,22 +180,16 @@ async function runTests() {
     let randomUserResponse;
     try {
       randomUserResponse = await fetch('https://randomuser.me/api/?gender=male&nat=us');
+      console.log(`[avatar] randomuser.me status: ${randomUserResponse.status}`);
     } catch (networkErr) {
       console.error('[avatar] randomuser fetch threw:', formatNetworkError(networkErr));
-      throw new Error(`Failed to fetch random user data (network error: ${networkErr.message})`);
-    }
-
-    console.log(`[avatar] randomuser.me status: ${randomUserResponse.status}`);
-    if (!randomUserResponse.ok) {
-      const errorText = await randomUserResponse.text().catch(() => '<no body>');
-      throw new Error(`Failed to fetch random user data: ${randomUserResponse.status} ${errorText}`);
     }
 
     let avatarBlob;
     let avatarFilename = 'avatar.jpg';
     let avatarSource = 'randomuser.me';
 
-    if (randomUserResponse.ok) {
+    if (randomUserResponse?.ok) {
       const randomUserData = await randomUserResponse.json();
       const avatarUrl = randomUserData.results[0].picture.large;
       console.log(`[avatar] fetched avatar URL: ${avatarUrl}`);
@@ -220,6 +214,11 @@ async function runTests() {
     }
 
     if (!avatarBlob) {
+      if (randomUserResponse && !randomUserResponse.ok) {
+        const errorText = await randomUserResponse.text().catch(() => '<no body>');
+        console.warn(`[avatar] randomuser fallback triggered: ${randomUserResponse.status} ${errorText.slice(0, 200)}`);
+      }
+
       const fallbackBuffer = Buffer.from(FALLBACK_AVATAR_BASE64, 'base64');
       avatarBlob = new Blob([fallbackBuffer], { type: 'image/png' });
       avatarFilename = 'avatar-fallback.png';
