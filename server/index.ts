@@ -74,12 +74,12 @@ app.use((req, res, next) => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      
+
       // Логируем только структуру ответа без чувствительных данных
       if (capturedJsonResponse) {
         const sanitized = sanitizeResponse(capturedJsonResponse);
         const sanitizedStr = JSON.stringify(sanitized);
-        
+
         // Ограничиваем длину лога, но не обрезаем посередине JSON
         if (sanitizedStr.length > 200) {
           logLine += ` :: ${sanitizedStr.slice(0, 197)}...`;

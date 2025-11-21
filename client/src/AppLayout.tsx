@@ -76,8 +76,8 @@ export default function AppLayout() {
     onAnyMessage: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/messages/conversations2'] });
     },
-    onNewMessage: () => {},
-  } : { onAnyMessage: () => {}, onNewMessage: () => {} });
+    onNewMessage: () => { },
+  } : { onAnyMessage: () => { }, onNewMessage: () => { } });
 
   return (
     <>

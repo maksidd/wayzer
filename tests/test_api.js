@@ -62,14 +62,14 @@ async function runTests() {
 
   // ========== AUTHENTICATION ==========
   console.log('\r\n\r\n\r\n🔐 AUTHENTICATION');
-  
+
   console.log('\r\n🔵 User registration');
   const timestamp = Date.now();
   const testEmail = `test${timestamp}@example.com`;
   console.log(`  ✓ User 1 email: ${testEmail}`);
   let authToken = '';
   let user1Id = '';
-  
+
   await test('User registration', async () => {
     testsTotal++;
     const response = await makeRequest('POST', '/api/auth/register', {
@@ -84,7 +84,7 @@ async function runTests() {
       throw new Error(`Expected 201, got ${response.status}: ${JSON.stringify(response.data)}`);
     }
   });
-  
+
   console.log('\r\n🔵 User login');
   await test('User login', async () => {
     testsTotal++;
@@ -108,7 +108,7 @@ async function runTests() {
 
   // ========== USER PROFILE ==========
   console.log('\r\n\r\n\r\n👤 USER PROFILE');
-  
+
   console.log('\r\n🔵 Getting user profile');
   await test('Get user profile', async () => {
     testsTotal++;
@@ -326,7 +326,7 @@ async function runTests() {
 
   // ========== TRIP TYPES ==========
   console.log('\r\n\r\n\r\n📊 TRIP TYPES');
-  
+
   console.log('\r\n🔵 Getting trip types');
   await test('Get trip types', async () => {
     testsTotal++;
@@ -345,7 +345,7 @@ async function runTests() {
 
   // ========== TRIPS ==========
   console.log('\r\n\r\n\r\n🧭 TRIPS');
-  
+
   console.log('\r\n🔵 Uploading main trip photo');
   let mainPhotoUrl = '';
   await test('Upload main trip photo', async () => {
@@ -610,12 +610,12 @@ async function runTests() {
 
   // ========== SECOND USER ==========
   console.log('\r\n\r\n\r\n👥 SECOND USER');
-  
+
   console.log('\r\n🔵 Registering second user');
   const testEmail2 = `test2${timestamp}@example.com`;
   let authToken2 = '';
   let user2Id = '';
-  
+
   await test('Register second user', async () => {
     testsTotal++;
     const response = await makeRequest('POST', '/api/auth/register', {
@@ -639,7 +639,7 @@ async function runTests() {
     if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
     if (!response.data.accessToken) throw new Error('No access token received');
     authToken2 = response.data.accessToken;
-    
+
     // Get user2 ID
     const profileResponse = await makeRequest('GET', '/api/users/me', null, {
       'Authorization': `Bearer ${authToken2}`
@@ -652,7 +652,7 @@ async function runTests() {
 
   // ========== TRIP PARTICIPATION ==========
   console.log('\r\n\r\n\r\n🎫 TRIP PARTICIPATION');
-  
+
   console.log('\r\n🔵 Joining trip (user2)');
   await test('Join trip', async () => {
     testsTotal++;
@@ -739,7 +739,7 @@ async function runTests() {
 
   // ========== FAVORITES ==========
   console.log('\r\n\r\n\r\n⭐ FAVORITES');
-  
+
   console.log('\r\n🔵 Adding trip to favorites');
   await test('Add trip to favorites', async () => {
     testsTotal++;
@@ -818,7 +818,7 @@ async function runTests() {
 
   // ========== MY TRIPS ==========
   console.log('\r\n\r\n\r\n🗺️ MY TRIPS');
-  
+
   console.log('\r\n🔵 Getting my trips');
   await test('Get my trips', async () => {
     testsTotal++;
@@ -839,7 +839,7 @@ async function runTests() {
 
   // ========== MESSAGES ==========
   console.log('\r\n\r\n\r\n💬 MESSAGES');
-  
+
   console.log('\r\n🔵 Sending message');
   let chatId = '';
   await test('Send message', async () => {
@@ -924,7 +924,7 @@ async function runTests() {
 
   // ========== LEAVE TRIP ==========
   console.log('\r\n\r\n\r\n🚪 LEAVE TRIP');
-  
+
   console.log('\r\n🔵 Leaving trip');
   await test('Leave trip', async () => {
     testsTotal++;
@@ -945,7 +945,7 @@ async function runTests() {
 
   // ========== REJECT REQUEST ==========
   console.log('\r\n\r\n\r\n❌ REJECT REQUEST');
-  
+
   // Create another trip and join request for testing reject
   console.log('\r\n🔵 Creating trip for reject test');
   let tripIdForReject = '';
@@ -1008,7 +1008,7 @@ async function runTests() {
 
   // ========== CITIES ==========
   console.log('\r\n\r\n\r\n🏙️ CITIES');
-  
+
   console.log('\r\n🔵 Getting cities');
   await test('Get cities', async () => {
     testsTotal++;

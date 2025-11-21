@@ -236,7 +236,7 @@ export default function Auth() {
                         </FormItem>
                       )}
                     />
-                    <div className="mb-4"/>
+                    <div className="mb-4" />
                     <Button
                       type="submit"
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white"
@@ -310,7 +310,7 @@ export default function Auth() {
                         </FormItem>
                       )}
                     />
-                     <div className="mb-4"/>
+                    <div className="mb-4" />
                     <Button
                       type="submit"
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white"

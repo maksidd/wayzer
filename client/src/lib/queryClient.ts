@@ -12,16 +12,16 @@ export async function apiRequest(
   options: RequestInit = {}
 ): Promise<Response> {
   const token = localStorage.getItem("accessToken");
-  
+
   const headers: Record<string, string> = {
     ...((options.headers as Record<string, string>) || {}),
   };
-  
+
   // Only set Content-Type if not using FormData (for file uploads)
   if (options.body && !(options.body instanceof FormData)) {
     headers["Content-Type"] = "application/json";
   }
-  
+
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
@@ -41,30 +41,30 @@ export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
-    const token = localStorage.getItem('accessToken');
-    const headers: Record<string, string> = {};
-    
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
+    async ({ queryKey }) => {
+      const token = localStorage.getItem('accessToken');
+      const headers: Record<string, string> = {};
 
-    console.log('Query request:', queryKey[0], 'Token present:', !!token);
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
 
-    const res = await fetch(queryKey[0] as string, {
-      credentials: "include", 
-      headers,
-    });
+      console.log('Query request:', queryKey[0], 'Token present:', !!token);
 
-    console.log('Query response status:', res.status);
+      const res = await fetch(queryKey[0] as string, {
+        credentials: "include",
+        headers,
+      });
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
-    }
+      console.log('Query response status:', res.status);
 
-    await throwIfResNotOk(res);
-    return await res.json();
-  };
+      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+        return null;
+      }
+
+      await throwIfResNotOk(res);
+      return await res.json();
+    };
 
 export const queryClient = new QueryClient({
   defaultOptions: {

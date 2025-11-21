@@ -1,61 +1,93 @@
-# Wayzer - REST API for Finding Travel Companions
+# Wayzer
 
-REST API for a travel companion service with full authentication, trip management, and a comments system.
+Wayzer is a full-stack web application designed to help people find travel companions and organize trips. Whether you're planning a weekend getaway, a hiking trip, or a city tour, Wayzer connects you with like-minded individuals.
 
 ## 🚀 Features
 
-- **User Authentication** - registration, login, JWT tokens
-- **Trip Management** - create, view, filter trips
-- **Participant System** - join and leave trips
-- **Comments** - discuss trips
-- **Trip Categories** - various types of travel
-- **Full Data Validation** - strict input validation
+### Core Functionality
+- **Trip Management**: Create, view, and join trips.
+- **Search & Discovery**: Filter trips by city, type (hiking, biking, etc.), date, and more.
+- **User Profiles**: Customizable profiles with avatars, bios, languages spoken, and photo galleries.
+- **Interactive Maps**: View trip routes and locations on an interactive map.
+
+### Social & Communication
+- **Real-time Chat**: Built-in messaging system for private conversations and group chats for trips.
+- **Comments**: Discuss trip details in the comment section.
+- **Favorites**: Save trips you're interested in.
+- **Trip Status**: Track your participation status (pending, approved).
+
+### Technical Features
+- **Authentication**: Secure user registration and login using JWT.
+- **File Uploads**: Upload photos and avatars (stored in Cloudflare R2/S3).
+- **Responsive Design**: Modern UI built with React and Tailwind CSS.
+- **Internationalization**: Support for multiple languages.
 
 ## 🛠 Tech Stack
 
-- **Backend**: Node.js, Express.js, TypeScript
-- **Database**: PostgreSQL with Drizzle ORM
-- **Authentication**: JWT tokens, bcrypt for passwords
-- **Validation**: Zod schemas
-- **Testing**: Jest, Supertest
-- **Deployment**: Docker ready
+### Frontend
+- **Framework**: React (Vite)
+- **Styling**: Tailwind CSS, Radix UI, Shadcn UI
+- **State Management**: TanStack Query (React Query)
+- **Routing**: Wouter
+- **Maps**: Leaflet / React-Leaflet
+- **Forms**: React Hook Form + Zod
 
-## ⚙️ Environment Variables
+### Backend
+- **Runtime**: Node.js
+- **Framework**: Express.js
+- **Language**: TypeScript
+- **Database**: PostgreSQL
+- **ORM**: Drizzle ORM
+- **Real-time**: WebSocket (ws)
+- **Storage**: AWS SDK (Cloudflare R2 compatible)
+- **Authentication**: Passport.js, JWT
 
-1. Скопируй файл `example.env` в `.env` и подставь реальные значения:
+## 📦 Installation & Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd wayzer4
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Environment Configuration**
+   Copy `example.env` to `.env` and fill in the required values:
    ```bash
    cp example.env .env
    ```
-2. Обязательно задай `ADMIN_EMAIL` и `ADMIN_PASSWORD`. При запуске сервера (`npm run dev` или `npm run start`) код в `server/routes.ts` проверит наличие этих переменных и создаст админа с указанными учётными данными, если такого пользователя ещё нет.
-3. (Опционально) `UNIVERSAL_PASSWORD` — дев-бэкдор. Если переменная задана, любой пользователь сможет зайти, указав этот пароль. Используй только на локалке/стейдже.
+   Required variables include database credentials, admin setup, and storage configuration.
 
-### Как проверить, что bootstrap работает
+4. **Database Setup**
+   Push the schema to the database:
+   ```bash
+   npm run db:push
+   ```
 
-```bash
-# 1. Запускаем сервер
-npm run dev
-
-# 2. Логинимся созданным админом
-curl -X POST http://localhost:5000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@example.com","password":"strong-admin-password"}'
-
-# 3. Полученный accessToken можно использовать для доступа к админским маршрутам
-curl http://localhost:5000/api/admin/users \
-  -H "Authorization: Bearer <accessToken>"
-```
-
-Если токен получился и админские маршруты отвечают 200-м, значит переменные заданы корректно и bootstrap админа сработал.
-
-### Проверка универсального пароля
-
-```bash
-curl -X POST http://localhost:5000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"любой@пользователь","password":"dev-everyone-pass"}'
-```
-
-Если ответ 200 и выдаётся токен, значит `UNIVERSAL_PASSWORD` активен. Никогда не включай эту переменную в production `.env`.
+5. **Run the Application**
+   Start the development server (runs both client and server):
+   ```bash
+   npm run dev
+   ```
 
 ## 📁 Project Structure
 
+- `client/` - Frontend React application
+  - `src/pages/` - Application routes/pages
+  - `src/components/` - Reusable UI components
+- `server/` - Backend Express application
+  - `routes.ts` - API endpoints
+  - `storage.ts` - Database access layer
+- `shared/` - Shared types and schemas (Zod)
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
