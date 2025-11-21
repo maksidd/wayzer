@@ -66,6 +66,10 @@ export default function CreateTrip() {
   const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
   const cityInputRef = useRef<HTMLInputElement>(null);
   const [participantGender, setParticipantGender] = useState<'any' | 'male' | 'female'>('any');
+  const cityCoordinatesCache = useRef<Record<string, { lat: number; lng: number }>>({});
+  const [cityLookupLoading, setCityLookupLoading] = useState(false);
+  const [highlightedCityIndex, setHighlightedCityIndex] = useState(-1);
+  const lastResolvedCityRef = useRef<string>("");
 
   // Date and time states
   const [date, setDate] = useState<string | null>(null);
@@ -134,13 +138,70 @@ export default function CreateTrip() {
   }, []);
 
   // Preset cities
-  const popularCities = [
+  type CityCoordinates = { name: string; lat: number; lng: number };
+  type CityOption = { id: number; name: string; priority?: number };
+
+  const popularCities: CityCoordinates[] = [
     { name: "Kyiv", lat: 50.4501, lng: 30.5234 },
     { name: "Lviv", lat: 49.8419, lng: 24.0315 },
     { name: "Kharkiv", lat: 49.9935, lng: 36.2304 },
     { name: "Odesa", lat: 46.4825, lng: 30.7233 },
     { name: "Dnipro", lat: 48.4647, lng: 35.0462 },
   ];
+
+  const normalizeCityName = (value: string) => value.trim().toLowerCase();
+
+  const getPopularCityCoordinates = (cityName: string) => {
+    const normalized = normalizeCityName(cityName);
+    const matchedCity = popularCities.find(city => normalizeCityName(city.name) === normalized);
+    if (!matchedCity) {
+      return null;
+    }
+    return { lat: matchedCity.lat, lng: matchedCity.lng };
+  };
+
+  const resolveCityCoordinates = async (cityName: string) => {
+    const normalized = normalizeCityName(cityName);
+    if (!normalized) {
+      return null;
+    }
+
+    const cached = cityCoordinatesCache.current[normalized];
+    if (cached) {
+      return cached;
+    }
+
+    const popularMatch = getPopularCityCoordinates(cityName);
+    if (popularMatch) {
+      cityCoordinatesCache.current[normalized] = popularMatch;
+      return popularMatch;
+    }
+
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cityName)}&format=json&limit=1`
+      );
+      if (!response.ok) {
+        return null;
+      }
+      const result = await response.json();
+      const [firstMatch] = result ?? [];
+      if (!firstMatch) {
+        return null;
+      }
+      const lat = Number(firstMatch.lat);
+      const lng = Number(firstMatch.lon);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        return null;
+      }
+      const coords = { lat, lng };
+      cityCoordinatesCache.current[normalized] = coords;
+      return coords;
+    } catch (error) {
+      console.error("City geocoding failed", error);
+      return null;
+    }
+  };
 
   const { data: user } = useQuery({
     queryKey: ["/api/users/me"],
@@ -181,7 +242,7 @@ export default function CreateTrip() {
   );
 
   // Get cities with filtering
-  const { data: cityOptions = [], isLoading: citiesLoading } = useQuery({
+  const { data: cityOptions = [] } = useQuery<CityOption[]>({
     queryKey: ["/api/cities", cityInput],
     queryFn: async () => {
       const resp = await fetch(`/api/cities?q=${encodeURIComponent(cityInput)}&limit=15`);
@@ -190,6 +251,20 @@ export default function CreateTrip() {
     },
     enabled: cityDropdownOpen,
   });
+
+  const cityDropdownListId = "city-suggestions-listbox";
+  const highlightedCityOptionId =
+    highlightedCityIndex >= 0 && highlightedCityIndex < cityOptions.length
+      ? `city-option-${cityOptions[highlightedCityIndex].id}`
+      : undefined;
+
+  React.useEffect(() => {
+    if (cityDropdownOpen && cityOptions.length > 0) {
+      setHighlightedCityIndex(0);
+      return;
+    }
+    setHighlightedCityIndex(-1);
+  }, [cityDropdownOpen, cityOptions.length]);
 
   const form = useForm<CreateTripData>({
     resolver: zodResolver(createTripSchema),
@@ -420,21 +495,115 @@ export default function CreateTrip() {
     }
   };
 
-  const handleCitySelect = (cityName: string) => {
-    const city = popularCities.find(c => c.name === cityName);
-    if (city) {
-      form.setValue("city", cityName);
-      form.setValue("location", { lat: city.lat, lng: city.lng });
-      setSelectedCity({ lat: city.lat, lng: city.lng });
+  const handleCityPick = async (cityName: string) => {
+    const trimmedName = cityName.trim();
+    if (!trimmedName) {
+      return;
+    }
+
+    const normalizedName = normalizeCityName(trimmedName);
+    if (!normalizedName) {
+      return;
+    }
+
+    setCityInput(trimmedName);
+    form.setValue("city", trimmedName);
+    setCityDropdownOpen(false);
+    setHighlightedCityIndex(-1);
+
+    setCityLookupLoading(true);
+    try {
+      const coordinates = await resolveCityCoordinates(trimmedName);
+      if (!coordinates) {
+        toast({
+          variant: "destructive",
+          title: t("pages:createTrip.toasts.errorTitle"),
+          description: "Не удалось определить координаты города",
+        });
+        return;
+      }
+      form.setValue("location", coordinates);
+      setSelectedCity(coordinates);
+      lastResolvedCityRef.current = normalizedName;
       // Clear route when city changes
       setRoutePoints([]);
       form.setValue("route", []);
+    } finally {
+      setCityLookupLoading(false);
     }
+  };
+
+  const handleCityInputBlur = () => {
+    setTimeout(() => setCityDropdownOpen(false), 150);
+    const trimmedName = cityInput.trim();
+    if (!trimmedName) {
+      lastResolvedCityRef.current = "";
+      return;
+    }
+    const normalizedName = normalizeCityName(trimmedName);
+    if (!normalizedName || normalizedName === lastResolvedCityRef.current) {
+      return;
+    }
+    void handleCityPick(trimmedName);
   };
 
   const handleRouteChange = (route: { lat: number; lng: number }[]) => {
     setRoutePoints(route);
     form.setValue("route", route);
+  };
+
+  const handleCityInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      if (!cityDropdownOpen) {
+        setCityDropdownOpen(true);
+        return;
+      }
+      setHighlightedCityIndex(prev => {
+        if (cityOptions.length === 0) {
+          return -1;
+        }
+        const nextIndex = prev + 1;
+        return nextIndex >= cityOptions.length ? 0 : nextIndex;
+      });
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      if (!cityDropdownOpen) {
+        setCityDropdownOpen(true);
+      }
+      setHighlightedCityIndex(prev => {
+        if (cityOptions.length === 0) {
+          return -1;
+        }
+        const nextIndex = prev - 1;
+        return nextIndex < 0 ? cityOptions.length - 1 : nextIndex;
+      });
+      return;
+    }
+
+    if (event.key === "Enter") {
+      if (cityDropdownOpen && highlightedCityIndex >= 0 && highlightedCityIndex < cityOptions.length) {
+        event.preventDefault();
+        void handleCityPick(cityOptions[highlightedCityIndex].name);
+        return;
+      }
+      if (cityInput.trim()) {
+        event.preventDefault();
+        void handleCityPick(cityInput);
+      }
+      return;
+    }
+
+    if (event.key === "Escape") {
+      if (cityDropdownOpen) {
+        event.preventDefault();
+        setCityDropdownOpen(false);
+        setHighlightedCityIndex(-1);
+      }
+    }
   };
 
   const handleLogout = () => {
@@ -744,49 +913,79 @@ export default function CreateTrip() {
                             ref={cityInputRef}
                             value={cityInput}
                             onFocus={() => setCityDropdownOpen(true)}
-                            onBlur={() => setTimeout(() => setCityDropdownOpen(false), 150)}
+                            onBlur={handleCityInputBlur}
                             onChange={e => {
                               setCityInput(e.target.value);
                               field.onChange(e.target.value);
+                              if (!cityDropdownOpen) {
+                                setCityDropdownOpen(true);
+                              }
                             }}
+                            onKeyDown={handleCityInputKeyDown}
                             placeholder={t("pages:createTrip.form.cityPlaceholder")}
                             autoComplete="off"
-                            className={cityInput ? "pr-10" : undefined}
+                            className="pr-16"
+                            role="combobox"
+                            aria-expanded={cityDropdownOpen}
+                            aria-controls={cityOptions.length > 0 ? cityDropdownListId : undefined}
+                            aria-activedescendant={highlightedCityOptionId}
+                            aria-autocomplete="list"
                           />
-                          {cityInput && (
-                            <button
-                              type="button"
-                              aria-label={clearCityLabel}
-                              className="absolute inset-y-0 right-2 flex items-center text-gray-400 hover:text-gray-700 dark:hover:text-white"
-                              onMouseDown={event => {
-                                event.preventDefault();
-                                event.stopPropagation();
-                              }}
-                              onClick={() => {
-                                setCityInput("");
-                                field.onChange("");
-                                cityInputRef.current?.focus();
-                              }}
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          )}
-                          {cityDropdownOpen && cityOptions.length > 0 && (
-                            <div className="absolute left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-[10000] max-h-96 overflow-y-auto">
-                              {cityOptions.map((city: any) => (
+                          {(cityLookupLoading || cityInput) && (
+                            <div className="absolute inset-y-0 right-2 flex items-center gap-2">
+                              {cityLookupLoading && (
                                 <div
-                                  key={city.id}
-                                  className="px-4 py-2 cursor-pointer hover:bg-accent text-sm"
-                                  onMouseDown={() => {
-                                    setCityInput(city.name);
-                                    field.onChange(city.name);
-                                    setCityDropdownOpen(false);
-                                    cityInputRef.current?.blur();
+                                  className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent"
+                                  aria-hidden="true"
+                                />
+                              )}
+                              {cityInput && (
+                                <button
+                                  type="button"
+                                  aria-label={clearCityLabel}
+                                  className="text-gray-400 hover:text-gray-700 dark:hover:text-white"
+                                  onMouseDown={event => {
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                  }}
+                                onClick={() => {
+                                    setCityInput("");
+                                    field.onChange("");
+                                  lastResolvedCityRef.current = "";
+                                    cityInputRef.current?.focus();
                                   }}
                                 >
-                                  {city.name}
-                  </div>
-                              ))}
+                                  <X className="h-4 w-4" />
+                                </button>
+                              )}
+                            </div>
+                          )}
+                          {cityDropdownOpen && cityOptions.length > 0 && (
+                            <div
+                              id={cityDropdownListId}
+                              role="listbox"
+                              className="absolute left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-[10000] max-h-96 overflow-y-auto"
+                            >
+                              {cityOptions.map((city, index) => {
+                                const isHighlighted = index === highlightedCityIndex;
+                                return (
+                                  <div
+                                    key={city.id}
+                                    id={`city-option-${city.id}`}
+                                    role="option"
+                                    aria-selected={isHighlighted}
+                                    className={`px-4 py-2 cursor-pointer text-sm ${isHighlighted ? "bg-accent text-accent-foreground" : "hover:bg-accent"}`}
+                                    onMouseEnter={() => setHighlightedCityIndex(index)}
+                                    onMouseDown={event => {
+                                      event.preventDefault();
+                                      event.stopPropagation();
+                                      void handleCityPick(city.name);
+                                    }}
+                                  >
+                                    {city.name}
+                                  </div>
+                                );
+                              })}
                             </div>
                           )}
                         </div>

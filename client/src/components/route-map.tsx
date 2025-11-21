@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Polyline, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polyline, useMapEvents, useMap } from 'react-leaflet';
 import { Button } from '@/components/ui/button';
 import { X, MapPin } from 'lucide-react';
 import L from 'leaflet';
@@ -34,6 +34,16 @@ function MapEventHandler({ onRouteChange, route }: { onRouteChange: (route: Rout
       onRouteChange([...route, newPoint]);
     },
   });
+  return null;
+}
+
+function MapCenterUpdater({ center }: { center: RoutePoint }) {
+  const map = useMap();
+
+  useEffect(() => {
+    map.setView([center.lat, center.lng]);
+  }, [center.lat, center.lng, map]);
+
   return null;
 }
 
@@ -107,6 +117,7 @@ export function RouteMap({ center, route, onRouteChange, className = "" }: Route
             url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
           />
            {/* url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" */}
+          <MapCenterUpdater center={center} />
           <MapEventHandler onRouteChange={onRouteChange} route={route} />
           
           {/* Markers for each route point */}
