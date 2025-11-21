@@ -27,9 +27,8 @@ router.get(
             const trips = await storage.getTrips(filters);
 
             // 1) Keep only routes where there are still free spots
-            const availableTrips = trips.filter(
-                (t: any) => (t.participantsCount ?? 0) < t.maxParticipants,
-            );
+            // Now handled in SQL
+            const availableTrips = trips;
 
             res.json(availableTrips);
         } catch (error) {

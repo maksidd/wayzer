@@ -310,7 +310,12 @@ export class DatabaseStorage implements IStorage {
       query = query.offset(filters.offset);
     }
 
-    query = query.groupBy(trips.id, users.id).orderBy(desc(trips.createdAt));
+    query = query
+      .groupBy(trips.id, users.id)
+      .having(
+        sql`cast(count(case when ${tripParticipants.status} = 'approved' then 1 end) as integer) < ${trips.maxParticipants}`,
+      )
+      .orderBy(desc(trips.createdAt));
 
     const result = await query;
 
@@ -747,11 +752,11 @@ export class DatabaseStorage implements IStorage {
       createdAt: row.createdAt,
       sender: row.senderId
         ? {
-            id: row.senderId,
-            name: row.senderName ?? "System",
-            avatarUrl: row.senderAvatarUrl,
-            avatarThumbnailUrl: row.senderAvatarThumbnailUrl,
-          }
+          id: row.senderId,
+          name: row.senderName ?? "System",
+          avatarUrl: row.senderAvatarUrl,
+          avatarThumbnailUrl: row.senderAvatarThumbnailUrl,
+        }
         : null,
     }));
   }
@@ -856,11 +861,11 @@ export class DatabaseStorage implements IStorage {
       createdAt: inserted.createdAt,
       sender: sender
         ? {
-            id: sender.id,
-            name: sender.name,
-            avatarUrl: sender.avatarUrl,
-            avatarThumbnailUrl: sender.avatarThumbnailUrl,
-          }
+          id: sender.id,
+          name: sender.name,
+          avatarUrl: sender.avatarUrl,
+          avatarThumbnailUrl: sender.avatarThumbnailUrl,
+        }
         : null,
     };
   }
@@ -893,31 +898,31 @@ export class DatabaseStorage implements IStorage {
 
     const lastMessage = row.last_msg_id
       ? {
-          id: row.last_msg_id,
-          senderId: row.last_msg_sender_id ?? null,
-          tripId: row.last_msg_trip_id ?? row.trip_id ?? null,
-          text: row.last_msg_text ?? null,
-          createdAt: row.last_msg_created ?? null,
-        }
+        id: row.last_msg_id,
+        senderId: row.last_msg_sender_id ?? null,
+        tripId: row.last_msg_trip_id ?? row.trip_id ?? null,
+        text: row.last_msg_text ?? null,
+        createdAt: row.last_msg_created ?? null,
+      }
       : null;
 
     const source =
       chatType === "private"
         ? {
-            type: "private" as const,
-            chatId: row.chat_id,
-            otherUserId: row.other_user_id ?? null,
-            name: row.other_user_name ?? null,
-            avatarUrl: row.avatar_url ?? null,
-            avatarThumbnailUrl: row.avatar_thumbnail_url ?? null,
-          }
+          type: "private" as const,
+          chatId: row.chat_id,
+          otherUserId: row.other_user_id ?? null,
+          name: row.other_user_name ?? null,
+          avatarUrl: row.avatar_url ?? null,
+          avatarThumbnailUrl: row.avatar_thumbnail_url ?? null,
+        }
         : {
-            type: "public" as const,
-            chatId: row.chat_id,
-            tripId: row.trip_id ?? null,
-            name: row.trip_title ?? "Group chat",
-            photoUrl: row.trip_photo ?? null,
-          };
+          type: "public" as const,
+          chatId: row.chat_id,
+          tripId: row.trip_id ?? null,
+          name: row.trip_title ?? "Group chat",
+          photoUrl: row.trip_photo ?? null,
+        };
 
     return {
       chatId: row.chat_id,
