@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/ui/header";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
@@ -16,8 +15,8 @@ import MyRoutes from "@/pages/my-routes";
 import MyTrips from "@/pages/my-trips";
 import { Switch, Route } from "wouter";
 import { useChatWebSocket } from "@/hooks/use-chat-websocket";
+import { useAuth } from "@/hooks/use-auth";
 import { queryClient } from "@/lib/queryClient";
-import { useRef, useEffect } from "react";
 
 function Router() {
   return (
@@ -44,32 +43,7 @@ function Router() {
 }
 
 export default function AppLayout() {
-  const { data: user } = useQuery({
-    queryKey: ["/api/users/me"],
-    queryFn: async () => {
-      const token = localStorage.getItem("accessToken");
-      if (!token) return null;
-      const response = await fetch("/api/users/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) return null;
-      return response.json();
-    },
-    retry: false,
-  });
-
-  const handleLogout = () => {
-    localStorage.removeItem("accessToken");
-    window.location.href = "/auth";
-  };
-
-  const handleAuthClick = (mode?: "login" | "register") => {
-    if (mode) {
-      window.location.href = `/auth?mode=${mode}`;
-    } else {
-      window.location.href = "/auth";
-    }
-  };
+  const { user, logout, navigateToAuth } = useAuth();
 
   const wsEnabled = !!user;
   useChatWebSocket(wsEnabled ? {
@@ -81,7 +55,7 @@ export default function AppLayout() {
 
   return (
     <>
-      <Header user={user} onLogout={handleLogout} onAuthClick={handleAuthClick} />
+      <Header user={user} onLogout={logout} onAuthClick={navigateToAuth} />
       <Router />
     </>
   );
