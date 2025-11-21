@@ -449,6 +449,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 const userId = req.user!.userId;
                 const { tripId } = req.params;
 
+                // Check if trip exists
+                const trip = await storage.getTripById(tripId);
+                if (!trip) {
+                    return res.status(404).json({ message: "Trip not found" });
+                }
+
                 await storage.addToFavorites(tripId, userId);
                 res.status(201).json({ message: "Added to favorites" });
             } catch (error) {
