@@ -78,7 +78,7 @@ router.get(
 
 // New endpoint for marking chat messages as read
 router.post(
-    "/mark-unread",
+    "/mark-read",
     authenticateToken,
     async (req: AuthenticatedRequest, res) => {
         try {

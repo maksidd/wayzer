@@ -67,7 +67,7 @@ node tests/comprehensive_test_api.js
 #### Сценарий 3: Множественные непрочитанные
 1. Alice отправляет несколько сообщений подряд
 2. Bob проверяет conversations - счетчик непрочитанных должен показывать все сообщения
-3. Bob вызывает `POST /api/messages/mark-unread?chatId=X`
+3. Bob вызывает `POST /api/messages/mark-read?chatId=X`
 4. Счетчик обнуляется
 
 #### Сценарий 4: Несколько чатов

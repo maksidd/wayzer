@@ -1009,7 +1009,7 @@ async function testMessaging({ trip1Id }) {
             throw new Error('No chat ID available (dependency on previous tests)');
         }
 
-        const res = await makeRequest('POST', `/api/messages/mark-unread?chatId=${chatId1}`, null, {
+        const res = await makeRequest('POST', `/api/messages/mark-read?chatId=${chatId1}`, null, {
             'Authorization': `Bearer ${testUsers.user2.token}`
         });
         assert(res.status === 204 || res.status === 200, `Expected 204 or 200, got ${res.status}: ${JSON.stringify(res.data)}`);

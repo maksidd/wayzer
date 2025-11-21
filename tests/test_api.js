@@ -913,7 +913,7 @@ async function runTests() {
       throw new Error('No chat ID available');
     }
 
-    const response = await makeRequest('POST', `/api/messages/mark-unread?chatId=${chatId}`, null, {
+    const response = await makeRequest('POST', `/api/messages/mark-read?chatId=${chatId}`, null, {
       'Authorization': `Bearer ${authToken}`
     });
 

@@ -195,8 +195,8 @@ export default function Messages() {
   });
   const currentConversationName = selectedConversation
     ? selectedConversation.otherUser?.name ??
-      selectedConversation.source.name ??
-      fallbackConversationName
+    selectedConversation.source.name ??
+    fallbackConversationName
     : fallbackConversationName;
 
   // If chat list is empty and WebSocket is already connected, try manually calling REST
@@ -328,7 +328,7 @@ export default function Messages() {
             avatarThumbnailUrl: (user as any).avatarThumbnailUrl || null,
           },
         };
-        
+
         queryClient.setQueryData([`/api/messages2/${selectedChatId}`], [...(previousMessages as MessageWithUsers[]), optimisticMessage]);
       }
 
@@ -340,7 +340,7 @@ export default function Messages() {
       if (context?.previousMessages) {
         queryClient.setQueryData([`/api/messages2/${selectedChatId}`], context.previousMessages);
       }
-      
+
       toast({
         title: t("pages:messages.toasts.sendErrorTitle"),
         description: t("pages:messages.toasts.sendErrorDescription"),
@@ -442,7 +442,7 @@ export default function Messages() {
   const handleRejectRequest = async (tripId: string, userId: string) => {
     try {
       await apiRequest(`/api/trips/${tripId}/reject/${userId}`, { method: 'POST' });
-      
+
       queryClient.invalidateQueries({ queryKey: [`/api/messages2/${selectedChatId}`] });
       // Update participant status
       queryClient.invalidateQueries({ queryKey: ["/api/trips/", tripId, "status", userId] });
@@ -485,7 +485,7 @@ export default function Messages() {
     if (unreadCount > 0) {
       const token = localStorage.getItem('accessToken');
       if (token) {
-        await fetch(`/api/messages/mark-unread?chatId=${chatId}`, {
+        await fetch(`/api/messages/mark-read?chatId=${chatId}`, {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -506,11 +506,11 @@ export default function Messages() {
       createdAt: raw.createdAt,
       sender: raw.sender
         ? {
-            id: raw.sender.id,
-            name: raw.sender.name || systemName,
-            avatarUrl: raw.sender.avatarUrl,
-            avatarThumbnailUrl: raw.sender.avatarThumbnailUrl,
-          }
+          id: raw.sender.id,
+          name: raw.sender.name || systemName,
+          avatarUrl: raw.sender.avatarUrl,
+          avatarThumbnailUrl: raw.sender.avatarThumbnailUrl,
+        }
         : null,
     };
   }
@@ -535,7 +535,7 @@ export default function Messages() {
         // Immediately mark chat as read
         const token = localStorage.getItem('accessToken');
         if (token) {
-          fetch(`/api/messages/mark-unread?chatId=${selectedChatId}`, {
+          fetch(`/api/messages/mark-read?chatId=${selectedChatId}`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}` }
           }).then(() => {
@@ -645,23 +645,23 @@ export default function Messages() {
                 {groupedConversations.newChats.length > 0 && (
                   <div>
                     <h3 className="px-2 py-1 text-sm font-medium text-muted-foreground">{sectionLabels.new}</h3>
-                    {groupedConversations.newChats.map((conversation:any) => {
+                    {groupedConversations.newChats.map((conversation: any) => {
                       const chatId = getChatId(conversation);
                       return (
-                      <ConversationItem
-                        key={chatId ?? `new-${conversation?.source?.name ?? "chat"}`}
-                        conversation={conversation}
-                        isSelected={chatId !== null && selectedKey === chatId}
-                        onClick={() =>
-                          handleConversationSelect(
-                            chatId,
-                            conversation.otherUser?.id ?? null,
-                            conversation.tripId ?? null,
-                            conversation.unreadCount,
-                          )
-                        }
-                      />
-                    );
+                        <ConversationItem
+                          key={chatId ?? `new-${conversation?.source?.name ?? "chat"}`}
+                          conversation={conversation}
+                          isSelected={chatId !== null && selectedKey === chatId}
+                          onClick={() =>
+                            handleConversationSelect(
+                              chatId,
+                              conversation.otherUser?.id ?? null,
+                              conversation.tripId ?? null,
+                              conversation.unreadCount,
+                            )
+                          }
+                        />
+                      );
                     })}
                   </div>
                 )}
@@ -670,23 +670,23 @@ export default function Messages() {
                 {groupedConversations.groupChats.length > 0 && (
                   <div>
                     <h3 className="px-2 py-1 text-sm font-medium text-muted-foreground">{sectionLabels.group}</h3>
-                    {groupedConversations.groupChats.map((conversation:any) => {
+                    {groupedConversations.groupChats.map((conversation: any) => {
                       const chatId = getChatId(conversation);
                       return (
-                      <ConversationItem
-                        key={chatId ?? `group-${conversation?.source?.name ?? "chat"}`}
-                        conversation={conversation}
-                        isSelected={chatId !== null && selectedKey === chatId}
-                        onClick={() =>
-                          handleConversationSelect(
-                            chatId,
-                            conversation.otherUser?.id ?? null,
-                            conversation.tripId ?? null,
-                            conversation.unreadCount,
-                          )
-                        }
-                      />
-                    );
+                        <ConversationItem
+                          key={chatId ?? `group-${conversation?.source?.name ?? "chat"}`}
+                          conversation={conversation}
+                          isSelected={chatId !== null && selectedKey === chatId}
+                          onClick={() =>
+                            handleConversationSelect(
+                              chatId,
+                              conversation.otherUser?.id ?? null,
+                              conversation.tripId ?? null,
+                              conversation.unreadCount,
+                            )
+                          }
+                        />
+                      );
                     })}
                   </div>
                 )}
@@ -695,23 +695,23 @@ export default function Messages() {
                 {groupedConversations.privateChats.length > 0 && (
                   <div>
                     <h3 className="px-2 py-1 text-sm font-medium text-muted-foreground">{sectionLabels.private}</h3>
-                    {groupedConversations.privateChats.map((conversation:any) => {
+                    {groupedConversations.privateChats.map((conversation: any) => {
                       const chatId = getChatId(conversation);
                       return (
-                      <ConversationItem
-                        key={chatId ?? `private-${conversation?.source?.name ?? "chat"}`}
-                        conversation={conversation}
-                        isSelected={chatId !== null && selectedKey === chatId}
-                        onClick={() =>
-                          handleConversationSelect(
-                            chatId,
-                            conversation.otherUser?.id ?? null,
-                            conversation.tripId ?? null,
-                            conversation.unreadCount,
-                          )
-                        }
-                      />
-                    );
+                        <ConversationItem
+                          key={chatId ?? `private-${conversation?.source?.name ?? "chat"}`}
+                          conversation={conversation}
+                          isSelected={chatId !== null && selectedKey === chatId}
+                          onClick={() =>
+                            handleConversationSelect(
+                              chatId,
+                              conversation.otherUser?.id ?? null,
+                              conversation.tripId ?? null,
+                              conversation.unreadCount,
+                            )
+                          }
+                        />
+                      );
                     })}
                   </div>
                 )}
@@ -720,23 +720,23 @@ export default function Messages() {
                 {groupedConversations.archivedChats.length > 0 && (
                   <div>
                     <h3 className="px-2 py-1 text-sm font-medium text-muted-foreground">{sectionLabels.archived}</h3>
-                    {groupedConversations.archivedChats.map((conversation:any) => {
+                    {groupedConversations.archivedChats.map((conversation: any) => {
                       const chatId = getChatId(conversation);
                       return (
-                      <ConversationItem
-                        key={chatId ?? `archived-${conversation?.source?.name ?? "chat"}`}
-                        conversation={conversation}
-                        isSelected={chatId !== null && selectedKey === chatId}
-                        onClick={() =>
-                          handleConversationSelect(
-                            chatId,
-                            conversation.otherUser?.id ?? null,
-                            conversation.tripId ?? null,
-                            conversation.unreadCount,
-                          )
-                        }
-                      />
-                    );
+                        <ConversationItem
+                          key={chatId ?? `archived-${conversation?.source?.name ?? "chat"}`}
+                          conversation={conversation}
+                          isSelected={chatId !== null && selectedKey === chatId}
+                          onClick={() =>
+                            handleConversationSelect(
+                              chatId,
+                              conversation.otherUser?.id ?? null,
+                              conversation.tripId ?? null,
+                              conversation.unreadCount,
+                            )
+                          }
+                        />
+                      );
                     })}
                   </div>
                 )}
@@ -807,12 +807,12 @@ export default function Messages() {
                             const isYellow = sys.type === 'yellow';
                             const isGreen = sys.type === 'green';
                             const isRed = sys.type === 'red';
-                            
+
                             let bgColor = 'bg-gray-200 text-gray-800';
                             if (isYellow) bgColor = 'bg-yellow-200 text-yellow-900';
                             else if (isGreen) bgColor = 'bg-green-200 text-green-900';
                             else if (isRed) bgColor = 'bg-red-200 text-red-900';
-                            
+
                             return (
                               <div key={sys.id} className="flex justify-center">
                                 <div className={`max-w-[80%] p-2 rounded-lg text-center ${bgColor}`}>
@@ -859,18 +859,18 @@ export default function Messages() {
                                         const statusKey = `${trip.id}-${senderId}`;
                                         const currentStatus = statusMap[statusKey];
                                         const isDisabled = currentStatus === 'approved' || currentStatus === 'rejected';
-                                        
+
                                         return (
                                           <>
-                                            <Button 
-                                              variant="destructive" 
+                                            <Button
+                                              variant="destructive"
                                               disabled={isDisabled}
                                               onClick={() => handleRejectRequest(trip.id, senderId)}
                                             >
                                               {t("common:buttons.reject")}
                                             </Button>
-                                            <Button 
-                                              className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400" 
+                                            <Button
+                                              className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400"
                                               disabled={isDisabled}
                                               onClick={() => handleAcceptRequest(trip.id, senderId)}
                                             >
@@ -902,11 +902,10 @@ export default function Messages() {
                                       </Avatar>
                                     )}
                                     <div
-                                      className={`max-w-[70%] p-3 rounded-lg ${
-                                        isOwn
+                                      className={`max-w-[70%] p-3 rounded-lg ${isOwn
                                           ? 'bg-primary text-primary-foreground'
                                           : 'bg-muted text-muted-foreground'
-                                      }`}
+                                        }`}
                                     >
                                       {/* Sender name for group chats and others' messages */}
                                       {isGroup && !isOwn && message.sender?.name && (
@@ -938,7 +937,7 @@ export default function Messages() {
                                   className="h-8 w-8 mr-2 cursor-pointer"
                                   onClick={() => message.sender?.id && setProfileUserId(message.sender.id)}
                                   tabIndex={0}
-                                    aria-label={getProfileAriaLabel(message.sender?.name)}
+                                  aria-label={getProfileAriaLabel(message.sender?.name)}
                                   onKeyDown={e => { if (e.key === 'Enter' && message.sender?.id) setProfileUserId(message.sender.id); }}
                                 >
                                   <AvatarImage src={message.sender.avatarUrl || undefined} alt={message.sender.name} />
@@ -948,11 +947,10 @@ export default function Messages() {
                                 </Avatar>
                               )}
                               <div
-                                className={`max-w-[70%] p-3 rounded-lg ${
-                                  isOwn
+                                className={`max-w-[70%] p-3 rounded-lg ${isOwn
                                     ? 'bg-primary text-primary-foreground'
                                     : 'bg-muted text-muted-foreground'
-                                }`}
+                                  }`}
                               >
                                 {/* Sender name for group chats and others' messages */}
                                 {isGroup && !isOwn && message.sender?.name && (

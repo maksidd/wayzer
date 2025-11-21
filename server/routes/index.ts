@@ -42,7 +42,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     app.use("/api/auth", authRouter);
     app.use("/api/users", usersRouter);
     app.use("/api/trips", tripsRouter);
-    app.use("/api/messages", messagesRouter); // Note: messagesRouter handles /conversations2, /mark-unread
+    app.use("/api/messages", messagesRouter); // Note: messagesRouter handles /conversations2, /mark-read
     app.use("/api/messages2", messages2Router); // messages2Router handles POST /messages2 and GET /messages2/:chatId
 
     // Legacy/Mixed routes that need to be properly refactored or moved later
