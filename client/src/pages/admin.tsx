@@ -42,16 +42,19 @@ export default function AdminPage() {
     refetchOnMount: 'always',
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await apiRequest(`/api/admin/users/${id}`, { method: 'DELETE' });
+  const statusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: "active" | "blocked" }) => {
+      await apiRequest(`/api/admin/users/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      });
     },
-    onSuccess: () => {
-      toast({ title: 'User deleted' });
+    onSuccess: (_, variables) => {
+      toast({ title: `User ${variables.status === 'blocked' ? 'blocked' : 'unblocked'}` });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
     },
     onError: () => {
-      toast({ title: 'Deletion error', variant: 'destructive' });
+      toast({ title: 'Status update error', variant: 'destructive' });
     },
   });
 
@@ -69,7 +72,8 @@ export default function AdminPage() {
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
-                  <TableHead></TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -78,16 +82,29 @@ export default function AdminPage() {
                     <TableCell>{u.id}</TableCell>
                     <TableCell>{u.name}</TableCell>
                     <TableCell>{u.email}</TableCell>
-                    <TableCell>{u.role}</TableCell>
+                    <TableCell className="capitalize">{u.role}</TableCell>
                     <TableCell>
+                      <span className={u.status === 'blocked' ? 'text-red-600 font-semibold' : 'text-green-600'}>
+                        {u.status}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
                       <Button
-                        variant="destructive"
+                        variant={u.status === 'blocked' ? 'secondary' : 'destructive'}
                         size="sm"
+                        disabled={statusMutation.isPending || u.id === me?.id}
                         onClick={() => {
-                          if (confirm('Delete user?')) deleteMutation.mutate(u.id);
+                          const nextStatus = u.status === 'blocked' ? 'active' : 'blocked';
+                          const confirmed = confirm(
+                            nextStatus === 'blocked'
+                              ? 'Заблокировать пользователя?'
+                              : 'Разблокировать пользователя?',
+                          );
+                          if (!confirmed) return;
+                          statusMutation.mutate({ id: u.id, status: nextStatus });
                         }}
                       >
-                        Delete
+                        {u.status === 'blocked' ? 'Unblock' : 'Block'}
                       </Button>
                     </TableCell>
                   </TableRow>

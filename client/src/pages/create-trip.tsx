@@ -50,7 +50,8 @@ export default function CreateTrip() {
   const { toast } = useToast();
   const { t, i18n } = useTranslation(["pages", "common", "trips"]);
   const resolvedLanguage = i18n.resolvedLanguage ?? i18n.language ?? "en";
-  const dateFnsLocale = resolvedLanguage.startsWith("ru") ? ruLocale : enUS;
+  const isRussianLanguage = resolvedLanguage.startsWith("ru");
+  const dateFnsLocale = isRussianLanguage ? ruLocale : enUS;
   const genericAny = t("common:generic.any");
   const clearCityLabel = t("common:generic.clearCity");
   const toastLogoutTitle = t("common:generic.toastLogoutTitle");
@@ -78,10 +79,50 @@ export default function CreateTrip() {
     setDate(val);
     form.setValue("date", val);
   };
-  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value || null;
-    setTime(val);
-    form.setValue("time", val);
+  const handleTimeSelect = (hour: number) => {
+    const value = `${String(hour).padStart(2, "0")}:00:00`;
+    setTime(value);
+    form.setValue("time", value);
+    setTimePickerOpen(false);
+  };
+
+  const formatTimeOptionLabel = (hour: number) => {
+    const paddedHour = String(hour).padStart(2, "0");
+    if (isRussianLanguage) {
+      return `${paddedHour}:00`;
+    }
+
+    const displayHour = hour % 12 || 12;
+    const suffix = hour < 12 ? "am" : "pm";
+    return `${displayHour}:00 ${suffix}`;
+  };
+
+  const formatSelectedTimeLabel = (value: string | null) => {
+    if (!value) {
+      return genericAny;
+    }
+
+    const [hours = "00", minutes = "00"] = value.split(":");
+    const hourNumber = Number(hours);
+    if (Number.isNaN(hourNumber)) {
+      return genericAny;
+    }
+
+    if (isRussianLanguage) {
+      return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
+    }
+
+    const displayHour = hourNumber % 12 || 12;
+    const suffix = hourNumber < 12 ? "am" : "pm";
+    return `${displayHour}:${minutes.padStart(2, "0")} ${suffix}`;
+  };
+
+  const isHourSelected = (hour: number) => {
+    if (!time) {
+      return false;
+    }
+    const paddedHour = String(hour).padStart(2, "0");
+    return time.startsWith(paddedHour);
   };
 
   // Split dateTime into date and time on form initialization
@@ -584,7 +625,7 @@ export default function CreateTrip() {
                               onClick={() => setTimePickerOpen(true)}
                             >
                               <span className={time ? "" : "text-black text-sm"}>
-                                {time ? `${time}:00` : genericAny}
+                                {formatSelectedTimeLabel(time)}
                               </span>
                               {time && (
                                 <X
@@ -604,36 +645,26 @@ export default function CreateTrip() {
                           <PopoverContent align="start" className="p-2 w-auto z-[9999] text-xs">
                             <div className="flex gap-4">
                               <div className="flex flex-col gap-2">
-                                {Array.from({ length: 12 }, (_, h) => h).map(h => (
+                                {Array.from({ length: 12 }, (_, hour) => hour).map(hour => (
                                   <button
-                                    key={h}
+                                    key={hour}
                                     type="button"
-                                    className={`px-2 py-1 rounded hover:bg-blue-100 dark:hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${time === String(h).padStart(2, '0') ? 'bg-blue-600 text-white' : 'bg-background text-gray-900 dark:text-white'}`}
-                                    onClick={() => {
-                                      const val = String(h).padStart(2, '0');
-                                      setTime(val);
-                                      form.setValue("time", val);
-                                      setTimePickerOpen(false);
-                                    }}
+                                    className={`px-2 py-1 rounded hover:bg-blue-100 dark:hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${isHourSelected(hour) ? 'bg-blue-600 text-white' : 'bg-background text-gray-900 dark:text-white'}`}
+                                    onClick={() => handleTimeSelect(hour)}
                                   >
-                                    {String(h).padStart(2, '0')}:00
+                                    {formatTimeOptionLabel(hour)}
                                   </button>
                                 ))}
                               </div>
                               <div className="flex flex-col gap-2">
-                                {Array.from({ length: 12 }, (_, i) => i + 12).map(h => (
+                                {Array.from({ length: 12 }, (_, index) => index + 12).map(hour => (
                                   <button
-                                    key={h}
+                                    key={hour}
                                     type="button"
-                                    className={`px-2 py-1 rounded hover:bg-blue-100 dark:hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${time === String(h).padStart(2, '0') ? 'bg-blue-600 text-white' : 'bg-background text-gray-900 dark:text-white'}`}
-                                    onClick={() => {
-                                      const val = String(h).padStart(2, '0');
-                                      setTime(val);
-                                      form.setValue("time", val);
-                                      setTimePickerOpen(false);
-                                    }}
+                                    className={`px-2 py-1 rounded hover:bg-blue-100 dark:hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${isHourSelected(hour) ? 'bg-blue-600 text-white' : 'bg-background text-gray-900 dark:text-white'}`}
+                                    onClick={() => handleTimeSelect(hour)}
                                   >
-                                    {String(h).padStart(2, '0')}:00
+                                    {formatTimeOptionLabel(hour)}
                                   </button>
                                 ))}
                               </div>

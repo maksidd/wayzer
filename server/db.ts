@@ -56,3 +56,11 @@ export async function ensureUsersRoleColumn() {
   }
 }
 
+export async function ensureUsersStatusColumn() {
+  const check = await pool.query("SELECT column_name FROM information_schema.columns WHERE table_name='users' AND column_name='status'");
+  if (check.rowCount === 0) {
+    console.log('[DB] Adding users.status column');
+    await pool.query("ALTER TABLE users ADD COLUMN status text NOT NULL DEFAULT 'active'");
+  }
+}
+

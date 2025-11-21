@@ -5,7 +5,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { spawn } from "child_process";
 import { storage } from "./storage";
-import { ensureUsersRoleColumn } from "./db";
+import { ensureUsersRoleColumn, ensureUsersStatusColumn } from "./db";
 import {
   authenticateToken,
   type AuthenticatedRequest,
@@ -32,6 +32,7 @@ import {
   type RegisterData,
   type LoginData,
   type TripFilters,
+  type User,
 } from "@shared/schema";
 import { requireAdmin } from "./middleware/admin";
 import { db } from "./db";
@@ -99,9 +100,71 @@ async function markChatAsReadForUser(chatId: string, userId: string) {
     .where(and(eq(chatParticipants.chatId, chatId), eq(chatParticipants.userId, userId)));
 }
 
+function forceLogoutUser(userId: string, reason?: string) {
+  const ws = connectedClients.get(userId);
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(
+      JSON.stringify({
+        type: "forced_logout",
+        reason: reason ?? "Account blocked by administration",
+      }),
+    );
+    ws.close();
+  }
+}
+
+async function notifyChatsAboutBlockedUser(blockedUser: User) {
+  const chatRows = await db
+    .select({ chatId: chatParticipants.chatId })
+    .from(chatParticipants)
+    .where(eq(chatParticipants.userId, blockedUser.id));
+
+  const chatIds = Array.from(new Set(chatRows.map((row) => row.chatId)));
+  if (chatIds.length === 0) {
+    return;
+  }
+
+  const systemText = `Пользователь ${blockedUser.name ?? "неизвестный"} заблокирован администрацией платформы`;
+
+  for (const chatId of chatIds) {
+    const [systemMessage] = await resolveReturning(
+      db
+        .insert(chatMessages)
+        .values({
+          chatId,
+          senderId: null,
+          text: systemText,
+          type: "red",
+        })
+        .returning(),
+    );
+
+    await markChatAsReadForUser(chatId, blockedUser.id);
+
+    const participants = await db
+      .select({ userId: chatParticipants.userId })
+      .from(chatParticipants)
+      .where(eq(chatParticipants.chatId, chatId));
+
+    for (const participant of participants) {
+      if (participant.userId === blockedUser.id) {
+        continue;
+      }
+      sendWS(participant.userId, {
+        type: "new_message",
+        chatId,
+        message: systemMessage,
+      });
+      await sendConversationsUpdate(participant.userId);
+      await sendUnreadCount(participant.userId);
+    }
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create necessary columns/tables
   await ensureUsersRoleColumn();
+  await ensureUsersStatusColumn();
 
   // Create admin account if it doesn't exist and credentials are provided
   const adminEmail = process.env.ADMIN_EMAIL;
@@ -170,6 +233,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUserByEmail(email);
       if (!user) {
         res.status(400).json({ message: "Invalid credentials" });
+        return;
+      }
+
+      if (user.status !== "active") {
+        res.status(403).json({ message: "Account blocked" });
         return;
       }
 
@@ -1517,6 +1585,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.json({ message: "User deleted" });
       } catch (err) {
         console.error("Admin delete user error:", err);
+        res.status(500).json({ message: "Internal server error" });
+      }
+    },
+  );
+
+  app.patch(
+    "/api/admin/users/:userId/status",
+    authenticateToken,
+    requireAdmin,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const { userId } = req.params;
+        const { status } = req.body as { status?: "active" | "blocked" };
+
+        if (status !== "active" && status !== "blocked") {
+          res.status(400).json({ message: "Invalid status value" });
+          return;
+        }
+
+        if (userId === req.user!.userId) {
+          res.status(400).json({ message: "You cannot change your own status" });
+          return;
+        }
+
+        const targetUser = await storage.getUser(userId);
+        if (!targetUser) {
+          res.status(404).json({ message: "User not found" });
+          return;
+        }
+
+        if (targetUser.status === status) {
+          res.json({ message: `User already ${status}` });
+          return;
+        }
+
+        await storage.updateUserStatus(userId, status);
+
+        if (status === "blocked") {
+          await notifyChatsAboutBlockedUser(targetUser);
+          forceLogoutUser(userId, "Account blocked by administration");
+        }
+
+        await sendConversationsUpdate(userId);
+        await sendUnreadCount(userId);
+
+        res.json({ message: status === "blocked" ? "User blocked" : "User unblocked" });
+      } catch (err) {
+        console.error("Admin update user status error:", err);
         res.status(500).json({ message: "Internal server error" });
       }
     },

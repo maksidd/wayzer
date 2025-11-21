@@ -43,6 +43,7 @@ export const users = pgTable("users", {
   languages: text("languages").array(),
   additionalPhotos: text("additional_photos").array(),
   role: text("role").notNull().default("user"),
+  status: text("status").$type<"active" | "blocked">().notNull().default("active"),
   messengers: jsonb("messengers").$type<Record<string, string>>(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -53,6 +54,12 @@ export const users = pgTable("users", {
 export const tripTypes = pgTable("trip_types", {
   id: text("id").primaryKey(),
   ordering: integer("ordering").default(0),
+});
+
+export const cities = pgTable("cities", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  priority: integer("priority").default(0),
 });
 
 // Trips table
@@ -340,6 +347,7 @@ export const insertUserSchema = createInsertSchema(users)
   })
   .extend({
     role: z.enum(["user", "admin"]).optional(),
+    status: z.enum(["active", "blocked"]).optional(),
     gender: z.enum(["male", "female", "other"]).optional(),
   });
 

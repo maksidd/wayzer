@@ -53,7 +53,8 @@ export interface IStorage {
     id: string,
     data: UpdateUserProfile,
   ): Promise<UserProfile | undefined>;
-  getAllUsers(): Promise<Pick<User, "id" | "name" | "email" | "role">[]>;
+  getAllUsers(): Promise<Pick<User, "id" | "name" | "email" | "role" | "status">[]>;
+  updateUserStatus(userId: string, status: "active" | "blocked"): Promise<void>;
   deleteUserCascade(userId: string): Promise<void>;
 
   // Trip operations
@@ -173,13 +174,14 @@ export class DatabaseStorage implements IStorage {
     return this.getUserProfile(id);
   }
 
-  async getAllUsers(): Promise<Pick<User, "id" | "name" | "email" | "role">[]> {
+  async getAllUsers(): Promise<Pick<User, "id" | "name" | "email" | "role" | "status">[]> {
     const usersData = await db
       .select({
         id: users.id,
         name: users.name,
         email: users.email,
         role: users.role,
+        status: users.status,
       })
       .from(users);
     return usersData.map((row) => ({
@@ -187,7 +189,15 @@ export class DatabaseStorage implements IStorage {
       name: row.name,
       email: row.email,
       role: row.role,
+      status: row.status,
     }));
+  }
+
+  async updateUserStatus(userId: string, status: "active" | "blocked"): Promise<void> {
+    await db
+      .update(users)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(users.id, userId));
   }
 
   async deleteUserCascade(userId: string): Promise<void> {
@@ -271,7 +281,7 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(favorites, eq(trips.id, favorites.tripId));
 
     // Filtering
-    const whereClauses = [];
+    const whereClauses = [eq(users.status, "active")];
     if (filters) {
       if (filters.city) {
         whereClauses.push(eq(trips.city, filters.city));
@@ -375,7 +385,7 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(users, eq(trips.creatorId, users.id))
       .leftJoin(tripParticipants, eq(trips.id, tripParticipants.tripId))
       .leftJoin(favorites, eq(trips.id, favorites.tripId))
-      .where(eq(trips.id, id))
+      .where(and(eq(trips.id, id), eq(users.status, "active")))
       .groupBy(
         trips.id,
         users.id,
@@ -1030,7 +1040,12 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(trips, eq(favorites.tripId, trips.id))
       .innerJoin(users, eq(trips.creatorId, users.id))
       .leftJoin(tripParticipants, eq(trips.id, tripParticipants.tripId))
-      .where(eq(favorites.userId, userId))
+      .where(
+        and(
+          eq(favorites.userId, userId),
+          eq(users.status, "active"),
+        ),
+      )
       .groupBy(trips.id, users.id);
 
     return result.map((row) => ({

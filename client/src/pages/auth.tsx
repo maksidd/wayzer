@@ -22,6 +22,7 @@ export default function Auth() {
   const { t } = useTranslation(["pages", "common"]);
   const urlParams = new URLSearchParams(window.location.search);
   const defaultTab = urlParams.get("mode") === "register" ? "register" : "login";
+  const isBlocked = urlParams.get("blocked") === "1";
 
   const registerForm = useForm<{ email: string; password: string }>({
     resolver: zodResolver(registerSchema.omit({ name: true })),
@@ -160,6 +161,11 @@ export default function Auth() {
           </Link>
         </div>
 
+        {isBlocked && (
+          <div className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/30 dark:text-red-100">
+            {t("auth.blockedBanner.text", { ns: "pages", defaultValue: "Ваш аккаунт заблокирован администрацией платформы. Свяжитесь с поддержкой, если считаете это ошибкой." })}
+          </div>
+        )}
         <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
           <CardHeader>
             <CardTitle className="text-2xl text-center text-gray-900 dark:text-white">

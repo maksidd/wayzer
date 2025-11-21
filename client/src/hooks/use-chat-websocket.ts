@@ -27,6 +27,11 @@ export function useChatWebSocket({ onNewMessage, onAnyMessage }: UseChatWebSocke
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+        if (data.type === 'forced_logout') {
+          localStorage.removeItem('accessToken');
+          window.location.href = '/auth?blocked=1';
+          return;
+        }
         if (data.type === 'new_message' && data.message) {
           onAnyMessage({ chatId: data.message.chatId || data.message.tripId || '', message: data.message });
           if (onNewMessage) {
