@@ -92,6 +92,13 @@ async function sendConversationsUpdate(userId: string) {
   sendWS(userId, { type: "conversations_update", conversations });
 }
 
+async function markChatAsReadForUser(chatId: string, userId: string) {
+  await db
+    .update(chatParticipants)
+    .set({ lastReadAt: sql`now()` })
+    .where(and(eq(chatParticipants.chatId, chatId), eq(chatParticipants.userId, userId)));
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create necessary columns/tables
   await ensureUsersRoleColumn();
@@ -1126,11 +1133,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Record system message in chat_messages (green)
         if (chatRowsAcc.length > 0) {
+          const chatId = chatRowsAcc[0].id;
           const [sysMsg] = await resolveReturning(
             db
               .insert(chatMessages)
               .values({
-                chatId: chatRowsAcc[0].id,
+                chatId,
                 senderId: null,
                 text: "Request accepted",
                 type: "green",
@@ -1139,10 +1147,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               .returning(),
           );
 
-          // WS notification to receiver
+          // Creator already knows about their action, mark chat as read for them
+          await markChatAsReadForUser(chatId, currentUserId);
+
+          // WS notification to participant who should see it as unread
           sendWS(userId, {
             type: "new_message",
-            chatId: chatRowsAcc[0].id,
+            chatId,
             message: sysMsg,
           });
         }
@@ -1345,11 +1356,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         if (chatRowsRej.length > 0) {
+          const chatId = chatRowsRej[0].id;
           const [sysMsg] = await resolveReturning(
             db
               .insert(chatMessages)
               .values({
-                chatId: chatRowsRej[0].id,
+                chatId,
                 senderId: null,
                 text: "Request rejected",
                 type: "red",
@@ -1358,9 +1370,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               .returning(),
           );
 
+          await markChatAsReadForUser(chatId, currentUserId);
+
           sendWS(userId, {
             type: "new_message",
-            chatId: chatRowsRej[0].id,
+            chatId,
             message: sysMsg,
           });
         }
