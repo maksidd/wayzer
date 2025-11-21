@@ -1,3 +1,14 @@
+const getChatId = (conversation: { chatId?: string | null; chat_id?: string | null; id?: string | null; source?: { chatId?: string | null; chat_id?: string | null } | null }) => {
+  return (
+    conversation?.chatId ??
+    conversation?.chat_id ??
+    conversation?.source?.chatId ??
+    conversation?.source?.chat_id ??
+    conversation?.id ??
+    null
+  );
+};
+
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueries } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -10,7 +21,11 @@ import { Send, MessageSquare, Check, X, Paperclip } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import type { ChatConversation, MessageWithUsers } from "@shared/schema";
+import type {
+  ChatConversation,
+  ChatConversationBuckets,
+  MessageWithUsers,
+} from "@shared/schema";
 import { TripCard } from "@/components/trip-card";
 import { MapPin, Users, User } from "lucide-react";
 import React from "react";
@@ -50,8 +65,11 @@ export default function Messages() {
       name ? t("pages:messages.profile.openWithName", { name }) : t("pages:messages.profile.open"),
     [t]
   );
-  const formatSmartDate = useCallback((dateString: string) => {
-    const date = new Date(dateString);
+  const formatSmartDate = useCallback((dateInput: string | Date) => {
+    const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
+    if (Number.isNaN(date.getTime())) {
+      return "";
+    }
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const msgDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -78,38 +96,59 @@ export default function Messages() {
   });
 
   // New REST: conversations2
-  const { data: convObj = { requested: [], private: [], public: [], archived: [] },
-          isLoading: conversationsLoading,
-          refetch: refetchConversations } = useQuery({
-    queryKey: ['/api/messages/conversations2'],
-    queryFn: () => apiRequest('/api/messages/conversations2').then(r=>r.json()),
+  const defaultConversationBuckets: ChatConversationBuckets = {
+    requested: [],
+    private: [],
+    public: [],
+    archived: [],
+  };
+
+  const {
+    data: convObj = defaultConversationBuckets,
+    isLoading: conversationsLoading,
+    refetch: refetchConversations,
+  } = useQuery<ChatConversationBuckets>({
+    queryKey: ["/api/messages/conversations2"],
+    queryFn: () => apiRequest("/api/messages/conversations2").then((r) => r.json()),
     staleTime: 5 * 1000,
     enabled: !!user,
   });
 
-  // Convert to array for existing UI logic
-  const mapConv = (it: any): ChatConversation & { chatId: string; otherUserId?: string } => {
-    const isPrivate = (it.type || it.source?.type) === 'private';
-    let userId = null;
-    if (isPrivate) {
-      userId = it.otherUserId || it.source?.otherUserId;
-      if (!userId && (it.users || it.participants) && user) {
-        const arr = it.users || it.participants;
-        userId = Array.isArray(arr) ? arr.find((id: string) => id !== user.id) : null;
-      }
+  type NormalizedConversation = ChatConversation & {
+    otherUserId: string | null;
+    otherUser: {
+      id: string | null;
+      name: string | null;
+      avatarUrl: string | null;
+      avatarThumbnailUrl: string | null;
+    } | null;
+    tripId: string | null;
+  };
+
+  const normalizeConversation = (
+    conversation: ChatConversation,
+  ): NormalizedConversation => {
+    if (conversation.source.type === "private") {
+      const otherUserId = conversation.source.otherUserId ?? null;
+
+      return {
+        ...conversation,
+        otherUserId,
+        otherUser: {
+          id: otherUserId,
+          name: conversation.source.name,
+          avatarUrl: conversation.source.avatarUrl,
+          avatarThumbnailUrl: conversation.source.avatarThumbnailUrl,
+        },
+        tripId: null,
+      };
     }
+
     return {
-      ...it,
-      chatId: it.chatId ?? it.chat_id ?? it.source?.chatId ?? it.source?.chat_id,
-      otherUserId: userId,
-      otherUser: {
-        id: userId,
-        name: it.source.name,
-        avatarUrl: it.source.avatarUrl ?? it.source.photoUrl ?? null,
-        avatarThumbnailUrl: it.source.avatarThumbnailUrl ?? null,
-      },
-      tripId: it.source.type === 'public' ? it.source.tripId : null,
-      type: it.source?.type || it.type, // <--- added
+      ...conversation,
+      otherUserId: null,
+      otherUser: null,
+      tripId: conversation.source.tripId ?? null,
     };
   };
 
@@ -122,14 +161,20 @@ export default function Messages() {
   }
 
   // While WS doesn't return chatId, use REST conversations2
-  const groupedConversations = useMemo(() => ({
-    newChats: sortByLastMessage(convObj.requested.map(mapConv)),
-    privateChats: sortByLastMessage(convObj.private.map(mapConv)),
-    groupChats: sortByLastMessage(convObj.public.map(mapConv)),
-    archivedChats: sortByLastMessage(convObj.archived.map(mapConv)),
-  }), [convObj]);
+  const normalizeBucket = (bucket: ChatConversation[]) =>
+    bucket.map((conv) => normalizeConversation(conv));
 
-  const conversations = [
+  const groupedConversations = useMemo(
+    () => ({
+      newChats: sortByLastMessage(normalizeBucket(convObj.requested)),
+      privateChats: sortByLastMessage(normalizeBucket(convObj.private)),
+      groupChats: sortByLastMessage(normalizeBucket(convObj.public)),
+      archivedChats: sortByLastMessage(normalizeBucket(convObj.archived)),
+    }),
+    [convObj, user?.id],
+  );
+
+  const conversations: NormalizedConversation[] = [
     ...groupedConversations.newChats,
     ...groupedConversations.privateChats,
     ...groupedConversations.groupChats,
@@ -143,7 +188,16 @@ export default function Messages() {
     return bTime - aTime;
   });
 
-  const selectedConversation = conversations.find(c => c.chatId === selectedKey);
+  const selectedConversation = conversations.find((c) => getChatId(c) === selectedKey);
+  const isPrivateConversation = !!selectedConversation?.otherUser;
+  const fallbackConversationName = t("pages:messages.groupChatTitle", {
+    defaultValue: "Group chat",
+  });
+  const currentConversationName = selectedConversation
+    ? selectedConversation.otherUser?.name ??
+      selectedConversation.source.name ??
+      fallbackConversationName
+    : fallbackConversationName;
 
   // If chat list is empty and WebSocket is already connected, try manually calling REST
   useEffect(() => {
@@ -170,7 +224,7 @@ export default function Messages() {
   }, [location]);
 
   // Load messages for selected chat via new endpoint
-  const { data: messages = [], isLoading: messagesLoading } = useQuery<any[]>({
+  const { data: messages = [], isLoading: messagesLoading } = useQuery<MessageWithUsers[]>({
     queryKey: selectedChatId ? [`/api/messages2/${selectedChatId}`] : [],
     queryFn: () => selectedChatId
       ? apiRequest(`/api/messages2/${selectedChatId}`).then((r) => r.json())
@@ -261,24 +315,19 @@ export default function Messages() {
       if (previousMessages && user && selectedConversation) {
         const optimisticMessage: MessageWithUsers = {
           id: 'temp-' + Date.now(),
+          chatId: selectedChatId ?? 'temp-chat',
           text: newMessage.text,
+          type: "general",
           senderId: user.id,
-          // for private chat can add receiver field if desired
           tripId: selectedTripId ?? null,
-          createdAt: new Date().toISOString(),
+          createdAt: new Date(),
           sender: {
             id: user.id,
             name: user.name,
             avatarUrl: (user as any).avatarUrl || null,
             avatarThumbnailUrl: (user as any).avatarThumbnailUrl || null,
           },
-          receiver: selectedConversation.otherUser ? {
-            id: selectedConversation.otherUser.id,
-            name: selectedConversation.otherUser.name,
-            avatarUrl: selectedConversation.otherUser.avatarUrl || null,
-            avatarThumbnailUrl: (selectedConversation.otherUser as any).avatarThumbnailUrl || null,
-          } : ({} as any)
-        } as any;
+        };
         
         queryClient.setQueryData([`/api/messages2/${selectedChatId}`], [...(previousMessages as MessageWithUsers[]), optimisticMessage]);
       }
@@ -412,7 +461,17 @@ export default function Messages() {
   }, [userLoading, user]);
 
   // Handle conversation selection
-  const handleConversationSelect = async (chatId: string, otherId: string | null, tripId: string | null, unreadCount: number) => {
+  const handleConversationSelect = async (
+    chatId: string | null,
+    otherId: string | null,
+    tripId: string | null,
+    unreadCount: number,
+  ) => {
+    if (!chatId) {
+      console.warn("Attempted to open chat without chatId", { otherId, tripId });
+      return;
+    }
+
     setSelectedKey(chatId);
     setSelectedChatId(chatId);
     const isGroup = !!tripId;
@@ -586,19 +645,24 @@ export default function Messages() {
                 {groupedConversations.newChats.length > 0 && (
                   <div>
                     <h3 className="px-2 py-1 text-sm font-medium text-muted-foreground">{sectionLabels.new}</h3>
-                    {groupedConversations.newChats.map((conversation:any) => (
+                    {groupedConversations.newChats.map((conversation:any) => {
+                      const chatId = getChatId(conversation);
+                      return (
                       <ConversationItem
-                        key={conversation.chatId}
+                        key={chatId ?? `new-${conversation?.source?.name ?? "chat"}`}
                         conversation={conversation}
-                        isSelected={selectedKey === conversation.chatId}
-                        onClick={() => handleConversationSelect(
-                          conversation.chatId,
-                          conversation.otherUser.id,
-                          conversation.tripId ?? null,
-                          conversation.unreadCount
-                        )}
+                        isSelected={chatId !== null && selectedKey === chatId}
+                        onClick={() =>
+                          handleConversationSelect(
+                            chatId,
+                            conversation.otherUser?.id ?? null,
+                            conversation.tripId ?? null,
+                            conversation.unreadCount,
+                          )
+                        }
                       />
-                    ))}
+                    );
+                    })}
                   </div>
                 )}
 
@@ -606,19 +670,24 @@ export default function Messages() {
                 {groupedConversations.groupChats.length > 0 && (
                   <div>
                     <h3 className="px-2 py-1 text-sm font-medium text-muted-foreground">{sectionLabels.group}</h3>
-                    {groupedConversations.groupChats.map((conversation:any) => (
+                    {groupedConversations.groupChats.map((conversation:any) => {
+                      const chatId = getChatId(conversation);
+                      return (
                       <ConversationItem
-                        key={conversation.chatId}
+                        key={chatId ?? `group-${conversation?.source?.name ?? "chat"}`}
                         conversation={conversation}
-                        isSelected={selectedKey === conversation.chatId}
-                        onClick={() => handleConversationSelect(
-                          conversation.chatId,
-                          conversation.otherUser.id,
-                          conversation.tripId ?? null,
-                          conversation.unreadCount
-                        )}
+                        isSelected={chatId !== null && selectedKey === chatId}
+                        onClick={() =>
+                          handleConversationSelect(
+                            chatId,
+                            conversation.otherUser?.id ?? null,
+                            conversation.tripId ?? null,
+                            conversation.unreadCount,
+                          )
+                        }
                       />
-                    ))}
+                    );
+                    })}
                   </div>
                 )}
 
@@ -626,19 +695,24 @@ export default function Messages() {
                 {groupedConversations.privateChats.length > 0 && (
                   <div>
                     <h3 className="px-2 py-1 text-sm font-medium text-muted-foreground">{sectionLabels.private}</h3>
-                    {groupedConversations.privateChats.map((conversation:any) => (
+                    {groupedConversations.privateChats.map((conversation:any) => {
+                      const chatId = getChatId(conversation);
+                      return (
                       <ConversationItem
-                        key={conversation.chatId}
+                        key={chatId ?? `private-${conversation?.source?.name ?? "chat"}`}
                         conversation={conversation}
-                        isSelected={selectedKey === conversation.chatId}
-                        onClick={() => handleConversationSelect(
-                          conversation.chatId,
-                          conversation.otherUser.id,
-                          conversation.tripId ?? null,
-                          conversation.unreadCount
-                        )}
+                        isSelected={chatId !== null && selectedKey === chatId}
+                        onClick={() =>
+                          handleConversationSelect(
+                            chatId,
+                            conversation.otherUser?.id ?? null,
+                            conversation.tripId ?? null,
+                            conversation.unreadCount,
+                          )
+                        }
                       />
-                    ))}
+                    );
+                    })}
                   </div>
                 )}
 
@@ -646,19 +720,24 @@ export default function Messages() {
                 {groupedConversations.archivedChats.length > 0 && (
                   <div>
                     <h3 className="px-2 py-1 text-sm font-medium text-muted-foreground">{sectionLabels.archived}</h3>
-                    {groupedConversations.archivedChats.map((conversation:any) => (
+                    {groupedConversations.archivedChats.map((conversation:any) => {
+                      const chatId = getChatId(conversation);
+                      return (
                       <ConversationItem
-                        key={conversation.chatId}
+                        key={chatId ?? `archived-${conversation?.source?.name ?? "chat"}`}
                         conversation={conversation}
-                        isSelected={selectedKey === conversation.chatId}
-                        onClick={() => handleConversationSelect(
-                          conversation.chatId,
-                          conversation.otherUser.id,
-                          conversation.tripId ?? null,
-                          conversation.unreadCount
-                        )}
+                        isSelected={chatId !== null && selectedKey === chatId}
+                        onClick={() =>
+                          handleConversationSelect(
+                            chatId,
+                            conversation.otherUser?.id ?? null,
+                            conversation.tripId ?? null,
+                            conversation.unreadCount,
+                          )
+                        }
                       />
-                    ))}
+                    );
+                    })}
                   </div>
                 )}
 
@@ -677,27 +756,33 @@ export default function Messages() {
               <>
                 <CardHeader className="p-4">
                   <div className="flex items-center gap-3">
-                    <Avatar
-                      className="h-10 w-10 cursor-pointer"
-                      onClick={() => {
-                        if (selectedConversation.otherUser.id) {
-                          setProfileUserId(selectedConversation.otherUser.id);
-                        } else {
-                          toast({
-                            title: t("pages:messages.profileUnavailableTitle"),
-                            description: t("pages:messages.profileUnavailableDescription"),
-                            variant: "destructive",
-                          });
-                        }
-                      }}
-                    >
-                      <AvatarImage src={selectedConversation.otherUser.avatarUrl || undefined} alt={selectedConversation.otherUser.name} />
-                      <AvatarFallback>
-                        {selectedConversation.otherUser.name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
+                    {isPrivateConversation && selectedConversation.otherUser && (
+                      <Avatar
+                        className="h-10 w-10 cursor-pointer"
+                        onClick={() => {
+                          if (selectedConversation.otherUser?.id) {
+                            setProfileUserId(selectedConversation.otherUser.id);
+                          } else {
+                            toast({
+                              title: t("pages:messages.profileUnavailableTitle"),
+                              description: t("pages:messages.profileUnavailableDescription"),
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                      >
+                        <AvatarImage
+                          src={selectedConversation.otherUser.avatarUrl || undefined}
+                          alt={currentConversationName}
+                        />
+                        <AvatarFallback>
+                          {selectedConversation.otherUser.name?.charAt(0).toUpperCase() ??
+                            currentConversationName.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
                     <h3 className="text-lg font-semibold">
-                      {selectedConversation.otherUser.name}
+                      {currentConversationName}
                     </h3>
                   </div>
                 </CardHeader>
@@ -743,6 +828,11 @@ export default function Messages() {
                           if (message.type === 'request' && message.tripId) {
                             const trip = tripMap[message.tripId];
                             if (trip) {
+                              if (!message.senderId) {
+                                return null;
+                              }
+                              const senderId = message.senderId;
+
                               const TypeIcon = getRouteTypeIcon(trip.type);
                               const typeName = resolveRouteTypeName(trip.type, t, i18n);
                               const isFavorite = favoriteTrips?.some((f: any) => (f.id ?? f) === trip.id);
@@ -766,7 +856,7 @@ export default function Messages() {
                                   {trip.creator.id === user?.id && (
                                     <div className="flex gap-2 mb-2">
                                       {(() => {
-                                        const statusKey = `${trip.id}-${message.senderId}`;
+                                        const statusKey = `${trip.id}-${senderId}`;
                                         const currentStatus = statusMap[statusKey];
                                         const isDisabled = currentStatus === 'approved' || currentStatus === 'rejected';
                                         
@@ -775,14 +865,14 @@ export default function Messages() {
                                             <Button 
                                               variant="destructive" 
                                               disabled={isDisabled}
-                                              onClick={() => handleRejectRequest(trip.id, message.senderId)}
+                                              onClick={() => handleRejectRequest(trip.id, senderId)}
                                             >
                                               {t("common:buttons.reject")}
                                             </Button>
                                             <Button 
                                               className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400" 
                                               disabled={isDisabled}
-                                              onClick={() => handleAcceptRequest(trip.id, message.senderId)}
+                                              onClick={() => handleAcceptRequest(trip.id, senderId)}
                                             >
                                               {t("common:buttons.accept")}
                                             </Button>

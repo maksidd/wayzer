@@ -76,17 +76,19 @@ function sendWS(userId: string, payload: any) {
 
 // Send current number of unread messages
 async function sendUnreadCount(userId: string) {
-  const conversations = await storage.getConversations(userId);
-  const unreadCount = conversations.reduce(
-    (total, conv) => total + (Number(conv.unreadCount) || 0),
-    0,
-  );
+  const buckets = await storage.getConversationBuckets(userId);
+  const unreadCount = [
+    ...buckets.requested,
+    ...buckets.private,
+    ...buckets.public,
+    ...buckets.archived,
+  ].reduce((total, conv) => total + (Number(conv.unreadCount) || 0), 0);
   sendWS(userId, { type: "unread_count", unreadCount });
 }
 
 // Send updated chat list
 async function sendConversationsUpdate(userId: string) {
-  const conversations = await storage.getConversations(userId);
+  const conversations = await storage.getConversationBuckets(userId);
   sendWS(userId, { type: "conversations_update", conversations });
 }
 
@@ -798,100 +800,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     async (req: AuthenticatedRequest, res) => {
       try {
         const userId = req.user!.userId;
-
-        // raw SQL for speed
-        const sqlQuery = sql`
-        SELECT c.id as chat_id, c.id as chatId, c.type as chat_type, c.status as chat_status, c.trip_id,
-               lm.id  as last_msg_id,
-               lm.sender_id as last_msg_sender_id,
-               lm.text as last_msg_text,
-               lm.created_at as last_msg_created,
-               other_u.id   as other_user_id,
-               other_u.name as other_user_name,
-               other_u.avatar_url,
-               other_u.avatar_thumbnail_url,
-               t.title as trip_title,
-               t.main_photo_url as trip_photo,
-               (SELECT count(*) FROM chat_messages cm
-                 WHERE cm.chat_id = c.id
-                   AND cm.created_at > coalesce(p.last_read_at, '1970-01-01')
-                   AND cm.sender_id <> ${userId}) as unread_count
-        FROM chats c
-        JOIN chat_participants p ON p.chat_id = c.id AND p.user_id = ${userId}
-        -- last message
-        LEFT JOIN LATERAL (
-          SELECT id, sender_id, text, created_at
-          FROM chat_messages cm
-          WHERE cm.chat_id = c.id
-          ORDER BY created_at DESC
-          LIMIT 1
-        ) lm ON true
-        -- other participant (for private)
-        LEFT JOIN chat_participants op ON op.chat_id = c.id AND op.user_id <> ${userId}
-        LEFT JOIN users other_u ON other_u.id = op.user_id
-        LEFT JOIN trips t ON t.id = c.trip_id;
-      `;
-
-        const resExec: any = await db.execute(sqlQuery);
-        const rows: any[] = extractRows(resExec);
-
-        const result = {
-          requested: [] as any[],
-          private: [] as any[],
-          public: [] as any[],
-          archived: [] as any[],
-        };
-
-        for (const r of rows) {
-          const chatType = r.chat_type;
-          const status = r.chat_status;
-
-          const lastMessage = r.last_msg_id
-            ? {
-                id: r.last_msg_id,
-                senderId: r.last_msg_sender_id,
-                tripId: r.trip_id,
-                text: r.last_msg_text,
-                createdAt: r.last_msg_created,
-              }
-            : null;
-
-          const unreadCount = Number(r.unread_count) || 0;
-
-          let source: any;
-          if (chatType === "private") {
-            source = {
-              type: "private",
-              chatId: r.chat_id,
-              name: r.other_user_name,
-              avatarUrl: r.avatar_url,
-              avatarThumbnailUrl: r.avatar_thumbnail_url,
-              otherUserId: r.other_user_id,
-            };
-          } else {
-            source = {
-              type: "public",
-              chatId: r.chat_id,
-              tripId: r.trip_id,
-              name: r.trip_title ?? "Group chat",
-              photoUrl: r.trip_photo,
-            };
-          }
-
-          const obj: any = { lastMessage, source, unreadCount };
-
-          if (status === "archived") {
-            result.archived.push(obj);
-          } else if (chatType === "private" && status === "requested") {
-            result.requested.push(obj);
-          } else if (chatType === "private") {
-            result.private.push(obj);
-          } else if (chatType === "public") {
-            result.public.push(obj);
-          }
-        }
-
-        res.json(result);
+        const conversations = await storage.getConversationBuckets(userId);
+        res.json(conversations);
       } catch (error) {
         console.error("Get conversations2 error:", error);
         res.status(500).json({ message: "Internal server error" });

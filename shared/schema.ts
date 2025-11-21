@@ -484,17 +484,54 @@ export type CommentWithUser = Comment & {
   user: Pick<User, "id" | "name">;
 };
 
-export type MessageWithUsers = Message & {
-  sender: Pick<User, "id" | "name" | "avatarUrl" | "avatarThumbnailUrl">;
-  receiver: Pick<User, "id" | "name" | "avatarUrl" | "avatarThumbnailUrl">;
+export type MessageWithUsers = {
+  id: string;
+  chatId: string;
+  senderId: string | null;
+  text: string;
+  type: ChatMessage["type"];
   tripId: string | null;
+  createdAt: Date | string | null;
+  sender: Pick<User, "id" | "name" | "avatarUrl" | "avatarThumbnailUrl"> | null;
 };
 
+export type ChatConversationSource =
+  | {
+      type: "private";
+      chatId: string;
+      otherUserId: string | null;
+      name: string | null;
+      avatarUrl: string | null;
+      avatarThumbnailUrl: string | null;
+    }
+  | {
+      type: "public";
+      chatId: string;
+      tripId: string | null;
+      name: string | null;
+      photoUrl: string | null;
+    };
+
 export type ChatConversation = {
-  otherUser: Pick<User, "id" | "name" | "avatarUrl" | "avatarThumbnailUrl">;
-  tripId: string | null;
-  lastMessage: Message | null;
+  chatId: string;
+  type: "private" | "public";
+  status: "archived" | "requested" | "active";
+  source: ChatConversationSource;
+  lastMessage: {
+    id: string;
+    senderId: string | null;
+    tripId: string | null;
+    text: string | null;
+    createdAt: Date | string | null;
+  } | null;
   unreadCount: number;
+};
+
+export type ChatConversationBuckets = {
+  requested: ChatConversation[];
+  private: ChatConversation[];
+  public: ChatConversation[];
+  archived: ChatConversation[];
 };
 
 export type UserProfile = Omit<User, "password">;
