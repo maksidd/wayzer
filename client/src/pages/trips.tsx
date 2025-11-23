@@ -63,8 +63,8 @@ export default function Trips() {
   const toastLogoutDescription = t("common:generic.toastLogoutDescription");
 
   // Extract trip ID from URL if present
-  const selectedTripId = location.startsWith('/trips/') && location !== '/trips' 
-    ? location.split('/trips/')[1] 
+  const selectedTripId = location.startsWith('/trips/') && location !== '/trips'
+    ? location.split('/trips/')[1]
     : null;
 
   const { data: user } = useQuery({
@@ -177,8 +177,11 @@ export default function Trips() {
           'Authorization': `Bearer ${localStorage.getItem('accessToken')}` || ''
         }
       });
+      if (!resp.ok) {
+        throw new Error('Failed to fetch favorites');
+      }
       const data = await resp.json();
-      return data;
+      return Array.isArray(data) ? data : [];
     }
   });
 
@@ -431,7 +434,7 @@ export default function Trips() {
                 </Popover>
               </div>
               <div className="flex items-end">
-                <Button 
+                <Button
                   onClick={() => {
                     setSearchCity("");
                     setCityInput("");

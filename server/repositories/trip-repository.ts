@@ -531,7 +531,7 @@ export class TripRepository {
             .innerJoin(users, eq(trips.creatorId, users.id))
             .leftJoin(tripParticipants, eq(trips.id, tripParticipants.tripId))
             .where(eq(favorites.userId, userId))
-            .groupBy(trips.id, users.id)
+            .groupBy(trips.id, users.id, favorites.createdAt)
             .orderBy(desc(favorites.createdAt));
 
         return result.map((row) => ({

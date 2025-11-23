@@ -98,7 +98,7 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
   const joinTripMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest(`/api/trips2/${tripId}/join`, {
-      method: 'POST',
+        method: 'POST',
       });
       return response.json();
     },
@@ -185,8 +185,11 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
           'Authorization': `Bearer ${localStorage.getItem('accessToken')}` || ''
         }
       });
+      if (!resp.ok) {
+        throw new Error('Failed to fetch favorites');
+      }
       const data = await resp.json();
-      return data;
+      return Array.isArray(data) ? data : [];
     }
   });
 
@@ -309,8 +312,8 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
               {trip.route && trip.route.length > 0 && (
                 <Card>
                   <CardContent className="p-0">
-                    <RouteDisplayMap 
-                      route={trip.route} 
+                    <RouteDisplayMap
+                      route={trip.route}
                       center={trip.location}
                       className="w-full h-72 md:h-96"
                     />
@@ -371,8 +374,8 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
                   <h3 className="font-semibold text-lg mb-3">{t("pages:tripModal.sections.organizer")}</h3>
                   <div className="flex items-start space-x-3">
                     <Avatar className="h-16 w-16 cursor-pointer" onClick={() => setProfileUserId(trip.creator.id)}>
-                      <AvatarImage 
-                        src={trip.creator.avatarThumbnailUrl || trip.creator.avatarUrl} 
+                      <AvatarImage
+                        src={trip.creator.avatarThumbnailUrl || trip.creator.avatarUrl}
                         alt={trip.creator.name}
                       />
                       <AvatarFallback className="bg-blue-100 text-blue-600">
@@ -431,7 +434,7 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
                           </div>
                         </div>
                       )}
-                      
+
                     </div>
                   </div>
                 </CardContent>
@@ -446,8 +449,8 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
                       {participants.map((participant: any) => (
                         <div key={participant.id} className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                           <Avatar className="h-10 w-10 cursor-pointer" onClick={() => setProfileUserId(participant.id)}>
-                            <AvatarImage 
-                              src={participant.avatarThumbnailUrl || participant.avatarUrl} 
+                            <AvatarImage
+                              src={participant.avatarThumbnailUrl || participant.avatarUrl}
                               alt={participant.name}
                             />
                             <AvatarFallback className="bg-blue-100 text-blue-600 text-sm">
@@ -506,7 +509,7 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
                             {t("pages:tripModal.join.subtitle")}
                           </p>
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             {t("pages:tripModal.join.label")}
@@ -519,8 +522,8 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
                             placeholder={t("pages:tripModal.join.placeholder")}
                           />
                         </div>
-                        
-                        <Button 
+
+                        <Button
                           className="w-full bg-blue-600 hover:bg-blue-700"
                           onClick={handleJoinTrip}
                           disabled={sendJoinMessageMutation.isPending || !joinMessage.trim()}
@@ -570,7 +573,7 @@ export function TripDetailModal({ tripId, isOpen, onClose }: TripDetailModalProp
                     )}
 
                     {isParticipant && (
-                      <Button 
+                      <Button
                         variant="destructive"
                         className="w-full"
                         onClick={() => leaveTripMutation.mutate()}

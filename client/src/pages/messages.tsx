@@ -128,17 +128,19 @@ export default function Messages() {
   const normalizeConversation = (
     conversation: ChatConversation,
   ): NormalizedConversation => {
-    if (conversation.source.type === "private") {
-      const otherUserId = conversation.source.otherUserId ?? null;
+    // Safely handle missing source data
+    const src = conversation.source ?? {};
+    if (src.type === "private") {
+      const otherUserId = src.otherUserId ?? null;
 
       return {
         ...conversation,
         otherUserId,
         otherUser: {
           id: otherUserId,
-          name: conversation.source.name,
-          avatarUrl: conversation.source.avatarUrl,
-          avatarThumbnailUrl: conversation.source.avatarThumbnailUrl,
+          name: src.name,
+          avatarUrl: src.avatarUrl,
+          avatarThumbnailUrl: src.avatarThumbnailUrl,
         },
         tripId: null,
       };
@@ -148,7 +150,7 @@ export default function Messages() {
       ...conversation,
       otherUserId: null,
       otherUser: null,
-      tripId: conversation.source.tripId ?? null,
+      tripId: src.tripId ?? null,
     };
   };
 
@@ -195,7 +197,7 @@ export default function Messages() {
   });
   const currentConversationName = selectedConversation
     ? selectedConversation.otherUser?.name ??
-    selectedConversation.source.name ??
+    selectedConversation?.source?.name ??
     fallbackConversationName
     : fallbackConversationName;
 
@@ -903,8 +905,8 @@ export default function Messages() {
                                     )}
                                     <div
                                       className={`max-w-[70%] p-3 rounded-lg ${isOwn
-                                          ? 'bg-primary text-primary-foreground'
-                                          : 'bg-muted text-muted-foreground'
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'bg-muted text-muted-foreground'
                                         }`}
                                     >
                                       {/* Sender name for group chats and others' messages */}
@@ -948,8 +950,8 @@ export default function Messages() {
                               )}
                               <div
                                 className={`max-w-[70%] p-3 rounded-lg ${isOwn
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'bg-muted text-muted-foreground'
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-muted text-muted-foreground'
                                   }`}
                               >
                                 {/* Sender name for group chats and others' messages */}
