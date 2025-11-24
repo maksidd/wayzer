@@ -57,8 +57,19 @@ export function Header({
     return all.filter((c: any) => c.unreadCount > 0).length;
   }, [convObj]);
 
+  // Setup WebSocket to listen for new messages and refresh conversations
+  useChatWebSocket({
+    onNewMessage: () => {
+      // Invalidate the conversations query to fetch updated unread counts
+      queryClient.invalidateQueries({ queryKey: ['/api/messages/conversations2'] });
+    },
+    onAnyMessage: () => {
+      // No additional handling needed for any message
+    },
+  });
+
   // Removed all useEffect and fetch related to unreadCount and localStorage
-  
+
   // const markMessagesAsRead = async () => {
   //   try {
   //     // optimistic
@@ -78,11 +89,11 @@ export function Header({
   //     console.error('Failed to mark all as read:', err);
   //   }
   // };
-  
+
   const handleTripsClick = () => {
     queryClient.invalidateQueries({ queryKey: ["/api/trips"] });
   };
-  
+
   return (
     <header className="sticky top-0 z-50 w-full bg-white dark:bg-gray-900 shadow-lg border-b border-gray-200 dark:border-gray-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -205,11 +216,11 @@ export function Header({
                   variant="ghost"
                   size="default"
                   className="p-3 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white [&_svg]:!size-5 relative"
-                  // onClick={markMessagesAsRead}
+                // onClick={markMessagesAsRead}
                 >
                   <MessageSquare className="h-6 w-6" />
                   {numericUnreadCount > 0 && (
-                    <span 
+                    <span
                       data-testid="unread-badge"
                       className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium"
                     >

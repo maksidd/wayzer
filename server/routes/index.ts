@@ -6,7 +6,7 @@ import { ensureUsersRoleColumn, ensureUsersStatusColumn } from "../db";
 import { PasswordUtils } from "../utils/password";
 import { requireAdmin } from "../middleware/admin";
 import { authenticateToken, type AuthenticatedRequest } from "../middleware/auth";
-
+import { JWTUtils } from "../utils/jwt";
 // Import routers
 import authRouter from "./auth";
 import usersRouter from "./users";
@@ -617,9 +617,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
             try {
                 const message = JSON.parse(data.toString());
                 if (message.type === 'auth') {
-                    const userId = message.userId;
-                    if (userId) {
-                        connectedClients.set(userId, ws);
+                    // Expect token in message.token, verify and extract userId
+                    const token = message.token;
+                    if (token) {
+                        try {
+                            const payload = JWTUtils.verifyToken(token);
+                            const userId = payload.userId;
+                            if (userId) {
+                                connectedClients.set(userId, ws);
+                            }
+                        } catch (e) {
+                            console.error('WebSocket auth failed:', e);
+                            // Close connection if auth fails
+                            ws.close();
+                        }
                     }
                 }
             } catch (e) {
