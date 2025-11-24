@@ -46,11 +46,22 @@ export function useChatWebSocket({ onNewMessage, onAnyMessage }: UseChatWebSocke
     };
 
     ws.onerror = (err) => {
-      // eslint-disable-next-line no-console
-      console.error('WebSocket error:', err);
+      // In development mode with React StrictMode, effects run twice
+      // This causes the WebSocket to be closed immediately, which is expected
+      // Only log errors that are not related to StrictMode cleanup
+      if (ws.readyState !== WebSocket.CLOSED) {
+        // eslint-disable-next-line no-console
+        console.error('WebSocket error:', err);
+      }
     };
 
     ws.onclose = () => {
+      // Suppress "closed before connection" errors in development
+      // These are expected due to React StrictMode double-mounting
+      if (import.meta.env.DEV && ws.readyState === WebSocket.CONNECTING) {
+        // Expected: StrictMode cleanup
+        return;
+      }
       // eslint-disable-next-line no-console
       console.log('WebSocket closed');
     };

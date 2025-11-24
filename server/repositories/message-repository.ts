@@ -5,6 +5,7 @@ import {
     users,
     trips,
     type ChatConversation,
+    type ChatConversationSource,
     type ChatConversationBuckets,
     type MessageWithUsers,
     type InsertMessage,
@@ -186,7 +187,7 @@ export class MessageRepository {
                 chatId: targetChatId!,
                 senderId,
                 text,
-                type: messageType,
+                type: messageType as any,
                 tripId,
             })
             .returning();
@@ -222,17 +223,29 @@ export class MessageRepository {
     }
 
     private mapConversationRow(row: any): ChatConversation {
+        const isPublic = row.chat_type === 'public';
+        const source: ChatConversationSource = isPublic
+            ? {
+                type: 'public',
+                chatId: row.chat_id,
+                tripId: row.trip_id,
+                name: row.trip_title || null,
+                photoUrl: row.trip_photo || null,
+            }
+            : {
+                type: 'private',
+                chatId: row.chat_id,
+                otherUserId: row.other_user_id || null,
+                name: row.other_user_name || null,
+                avatarUrl: row.avatar_url || null,
+                avatarThumbnailUrl: row.avatar_thumbnail_url || null,
+            };
+
         return {
             chatId: row.chat_id,
-            chatType: row.chat_type,
-            chatStatus: row.chat_status,
-            tripId: row.trip_id,
-            tripTitle: row.trip_title,
-            tripPhoto: row.trip_photo,
-            otherUserId: row.other_user_id,
-            otherUserName: row.other_user_name,
-            otherUserAvatarUrl: row.avatar_url,
-            otherUserAvatarThumbnailUrl: row.avatar_thumbnail_url,
+            type: row.chat_type as 'private' | 'public',
+            status: row.chat_status as 'archived' | 'requested' | 'active',
+            source,
             lastMessage: row.last_msg_id
                 ? {
                     id: row.last_msg_id,
@@ -264,12 +277,12 @@ export class MessageRepository {
             }
         });
 
-        for (const conv of uniqueConversations.values()) {
-            if (conv.chatStatus === "archived") {
+        for (const conv of Array.from(uniqueConversations.values())) {
+            if (conv.status === "archived") {
                 buckets.archived.push(conv);
-            } else if (conv.chatStatus === "requested") {
+            } else if (conv.status === "requested") {
                 buckets.requested.push(conv);
-            } else if (conv.chatType === "public") {
+            } else if (conv.type === "public") {
                 buckets.public.push(conv);
             } else {
                 buckets.private.push(conv);

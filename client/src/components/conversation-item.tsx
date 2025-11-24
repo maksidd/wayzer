@@ -19,13 +19,12 @@ export function ConversationItem({ conversation, isSelected, onClick }: Conversa
 
   return (
     <div
-      className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
-        isSelected ? 'bg-muted' : 'hover:bg-muted/50'
-      }`}
+      className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${isSelected ? 'bg-muted' : 'hover:bg-muted/50'
+        }`}
       onClick={onClick}
     >
       <Avatar className="h-10 w-10 flex-shrink-0">
-        <AvatarImage src={avatarUrl || undefined} alt={name} />
+        <AvatarImage src={avatarThumb || avatarUrl || undefined} alt={name} />
         <AvatarFallback>
           {name?.charAt(0).toUpperCase()}
         </AvatarFallback>

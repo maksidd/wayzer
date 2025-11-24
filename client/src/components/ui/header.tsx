@@ -10,10 +10,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link } from "wouter";
-import { Menu, MessageSquare, Heart } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Menu, MessageSquare } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
-import { useChatWebSocket } from "@/hooks/use-chat-websocket";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
@@ -56,17 +54,6 @@ export function Header({
     const all = [...(convObj.private || []), ...(convObj.public || [])];
     return all.filter((c: any) => c.unreadCount > 0).length;
   }, [convObj]);
-
-  // Setup WebSocket to listen for new messages and refresh conversations
-  useChatWebSocket({
-    onNewMessage: () => {
-      // Invalidate the conversations query to fetch updated unread counts
-      queryClient.invalidateQueries({ queryKey: ['/api/messages/conversations2'] });
-    },
-    onAnyMessage: () => {
-      // No additional handling needed for any message
-    },
-  });
 
   // Removed all useEffect and fetch related to unreadCount and localStorage
 
