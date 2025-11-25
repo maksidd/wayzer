@@ -252,10 +252,15 @@ router.get(
             const { tripId, userId } = req.params;
             const currentUserId = req.user!.userId;
 
-            // Check if current user is the trip creator (only creator can check other users' status)
+            // Check if current user is the trip creator OR checking their own status
             const trip = await storage.getTripById(tripId);
-            if (!trip || trip.creatorId !== currentUserId) {
-                return res.status(403).json({ message: "Only trip creator can check participants status" });
+            if (!trip) {
+                return res.status(404).json({ message: "Trip not found" });
+            }
+
+            // Allow if user is trip creator or checking their own status
+            if (trip.creatorId !== currentUserId && userId !== currentUserId) {
+                return res.status(403).json({ message: "You can only check your own status or participants status if you are the trip creator" });
             }
 
             const status = await storage.getUserTripStatus(tripId, userId);
